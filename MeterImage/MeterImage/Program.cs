@@ -49,12 +49,7 @@ namespace MeterImage
                 var srcMorph = SrcMorph(adaptiveTreshold, srcFilename);
                 HierarchyIndex[] hierarchyIndexes;
                 
-                new Window("adaptiveTreshold", image: adaptiveTreshold);
-                new Window("srcNumberOrg", image: srcNumberOrg);
-                using (new Window("srcMorph", image: srcMorph))
-                {
-                    Cv2.WaitKey(0);
-                }
+                
 
                 var contours=GetContours(srcMorph, out hierarchyIndexes);
                 Console.WriteLine("pic contours count:" + contours);
@@ -81,13 +76,18 @@ namespace MeterImage
                                     var org = contoursOrg[contourOrg];
                                     double distanceToResult = Cv2.MatchShapes(meter, org, ShapeMatchModes.I3, 0.0);
 
-                                    // var roi = new Mat(threshImage, boundingRect); //Crop the image
-
+                                    var roi = new Mat(src, rectOrg); //Crop the image
+                                    // http://www.dotnettips.info/post/2131/opencvsharp-18
                                     var results = new Mat();
                                     var neighborResponses = new Mat();
                                     var dists = new Mat();
-                                    var kNeareast=OpenCvSharp.ML.KNearest.Create();
-                                    var result = kNeareast.FindNearest(src, 1, results, neighborResponses, dists);
+                                    var resizedImage = new Mat();
+                                    var resizedImageFloat = new Mat();
+                                    Cv2.Resize(roi, resizedImage, new OpenCvSharp.Size(10, 10)); //resize to 10X10
+                                    resizedImage.ConvertTo(resizedImageFloat, MatType.CV_32FC1); //convert to float
+                                    var resultResize = resizedImageFloat.Reshape(1, 1);
+                                    var kNeareast = OpenCvSharp.ML.KNearest.Create();
+                                    var result = kNeareast.FindNearest(resultResize, 1, results, neighborResponses, dists);
 
                                     Console.WriteLine("res: " + distanceToResult);
                                     // if(distanceToResult > 0 && distanceToResult<2)
@@ -104,8 +104,17 @@ namespace MeterImage
                             }
                         }
                 }
+                
                 Console.WriteLine("matchCount: " + matchCount);
                 resPic.Save(path + @"polFil_1_Result.jpg");
+                var resultPic = new Mat(path + @"polFil_1_Result.jpg");
+                new Window("resultPic", image: resultPic);
+                new Window("adaptiveTreshold", image: adaptiveTreshold);
+                new Window("srcNumberOrg", image: srcNumberOrg);
+                using (new Window("srcMorph", image: srcMorph))
+                {
+                    Cv2.WaitKey(0);
+                }
 
             }
             catch (System.IO.FileNotFoundException ex)
