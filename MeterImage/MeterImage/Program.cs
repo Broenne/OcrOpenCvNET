@@ -101,19 +101,9 @@ namespace MeterImage
                 //////////////////////////////////////////////////////////////////////////////////////////
                 //////////////////////////////////////////////////////////////////////////////////////
                 // croppedFaceImage = originalImage(faceRect).clone();
-                var iterator = 0;
-                List<Mat> digitList = new List<Mat>();
-                foreach (var digit in orderedList)
-                {
-                    var toCrop = Cv2.BoundingRect(digit);
-                    Mat croped = new Mat(src, toCrop);
-                    Mat cropedResize = new Mat();
-                    OpenCvSharp.Size size = new OpenCvSharp.Size(600,600);
-                    Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
-                    //roi.reshape(1, 1).convertTo(sample, CV_32F);
-                    digitList.Add(cropedResize);
-                }
+                var digitList = CropAndResizeTheImages(orderedList, src);
 
+                // todo mb. gut wäre, wenn man einen etwas größeren auschnitt zeigen würde
                 Console.WriteLine("Found Contours:" + digitList.Count);
                 foreach (var digPic in digitList)
                 {
@@ -143,6 +133,26 @@ namespace MeterImage
             }
 
             Console.ReadKey();
+        }
+
+        private static List<Mat> CropAndResizeTheImages(List<Point[]> orderedList, Mat src)
+        {
+            var iterator = 0;
+            List<Mat> digitList = new List<Mat>();
+            foreach (var digit in orderedList)
+            {
+                var toCrop = Cv2.BoundingRect(digit);
+                Mat croped = new Mat(src, toCrop);
+                Mat cropedResize = new Mat();
+                OpenCvSharp.Size size = new OpenCvSharp.Size(600, 600);
+                Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
+
+                Mat sampleNumber = new Mat();
+                cropedResize.ConvertTo(sampleNumber, MatType.CV_32FC1); //convert to float
+                var result = sampleNumber.Reshape(1, 1);
+                digitList.Add(cropedResize);
+            }
+            return digitList;
         }
 
         private static Mat ErodeMorpholgy(Mat src)
