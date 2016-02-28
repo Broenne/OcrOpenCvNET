@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
+using System.Windows.Media.Media3D;
 using OpenCvSharp;
 using OpenCvSharp.ML;
 using Point = OpenCvSharp.Point;
@@ -25,93 +28,152 @@ namespace MeterImage
             {
                 //Bitmap image1 = (Bitmap) Image.FromFile(path + srcFilename, true);
                 var fileName = path + srcFilename;
+                Mat org = new Mat(fileName, ImreadModes.Color);
                 Mat src = new Mat(fileName, ImreadModes.GrayScale); // OpenCvSharp 3.x
                 Mat dst = new Mat();
 
                 Console.WriteLine("size: row:" + src.Row + "  height: " + src.Height);
 
-                // adaptive treshold
+                // adaptive (dynamic) treshold
                 Cv2.AdaptiveThreshold(src, dst, 255, AdaptiveThresholdTypes.MeanC, ThresholdTypes.Binary, 11, 2.0);
                     // was bringen die Nummern?
                 dst.SaveImage(path + srcFilename.Replace(".jpg", "_") + "adaptiveTreshold.jpg");
                 
 
-                Mat srcNumberOrg = new Mat(path + @"Null.jpg", ImreadModes.GrayScale);
-                var srcMorphOrg = SrcMorph(srcNumberOrg, srcFilename);
-                HierarchyIndex[] hierarchyIndexesOrg;
-                var contoursOrg = GetContours(srcMorphOrg, out hierarchyIndexesOrg);
-                Console.WriteLine("orginal contours count:"+ contoursOrg);
-                srcMorphOrg.SaveImage(path + "Null_Morph.jpg");
+                // Todo mb: Bild an Kanten begradigen
+
+                // Test mit "OrginalBild_Null"
+                //Mat srcNumberOrg = new Mat(path + @"Null.jpg", ImreadModes.GrayScale);
+                //var srcMorphOrg = SrcMorph(srcNumberOrg, srcFilename);
+                //HierarchyIndex[] hierarchyIndexesOrg;
+                //var contoursOrg = GetContours(srcMorphOrg, out hierarchyIndexesOrg);
+                //Console.WriteLine("orginal contours count:"+ contoursOrg);
+                //srcMorphOrg.SaveImage(path + "Null_Morph.jpg");
 
 
-                Mat adaptiveTreshold = new Mat(path + srcFilename.Replace(".jpg", "_") + "adaptiveTreshold.jpg",
-                   ImreadModes.GrayScale);
-                var srcMorph = SrcMorph(adaptiveTreshold, srcFilename);
+                //Mat adaptiveTreshold = new Mat(path + srcFilename.Replace(".jpg", "_") + "adaptiveTreshold.jpg",
+                //   ImreadModes.GrayScale);
+                //var srcMorph = SrcMorph(adaptiveTreshold, srcFilename);
+
+
                 HierarchyIndex[] hierarchyIndexes;
-                
-                
-
-                var contours=GetContours(srcMorph, out hierarchyIndexes);
-                Console.WriteLine("pic contours count:" + contours);
+                Point[][] contours = GetContours(src, out hierarchyIndexes);
+                Console.WriteLine("pic contours count Start:" + contours);
                 // GetValue(contours, adaptiveTreshold, hierarchyIndexes);
-                adaptiveTreshold.SaveImage(path + srcFilename.Replace(".jpg", "_") + "conturs.jpg");
+                //adaptiveTreshold.SaveImage(path + srcFilename.Replace(".jpg", "_") + "conturs.jpg");
                 
-                Bitmap resPic = (Bitmap)Image.FromFile(fileName, true);
-                var matchCount = 0;
-                
-                for (int contour = 0; contour < contours.Length; contour++)
+
+                // Filter contours Höhe > Breite
+                Point[][] contoursHelper = (Point[][])contours.Clone();//= new Point;
+                List<Point[]> points = new List<Point[]>();
+
+                contoursHelper.Initialize();
+                foreach (var contour in contours)
                 {
-                    var rect = Cv2.BoundingRect(contours[contour]);
+                    Rect rect = Cv2.BoundingRect(contour);
                     if (rect.Height > rect.Width)
-                    { 
-                        for (int contourOrg = 0; contourOrg < contoursOrg.Length; contourOrg++)
-                        {
-                            var oneContourOrgArray = contoursOrg[contourOrg];
-                            var rectOrg = Cv2.BoundingRect(oneContourOrgArray);
-                            // zu kleine konturen des orginal brauchen nicht untersucht werden, woher bekommt man im orginal nur eine Kontur???
-                            //if (rect.Width > srcNumberOrg.Width * 0.3 && rect.Height > srcNumberOrg.Height * 0.4)
-                                if (rectOrg.Height > rectOrg.Width)
-                                {
-                                    var meter=contours[contour];
-                                    var org = contoursOrg[contourOrg];
-                                    double distanceToResult = Cv2.MatchShapes(meter, org, ShapeMatchModes.I3, 0.0);
-
-                                    var roi = new Mat(src, rectOrg); //Crop the image
-                                    // http://www.dotnettips.info/post/2131/opencvsharp-18
-                                    var results = new Mat();
-                                    var neighborResponses = new Mat();
-                                    var dists = new Mat();
-                                    var resizedImage = new Mat();
-                                    var resizedImageFloat = new Mat();
-                                    Cv2.Resize(roi, resizedImage, new OpenCvSharp.Size(10, 10)); //resize to 10X10
-                                    resizedImage.ConvertTo(resizedImageFloat, MatType.CV_32FC1); //convert to float
-                                    var resultResize = resizedImageFloat.Reshape(1, 1);
-                                    var kNeareast = OpenCvSharp.ML.KNearest.Create();
-                                    var result = kNeareast.FindNearest(resultResize, 1, results, neighborResponses, dists);
-
-                                    Console.WriteLine("res: " + distanceToResult);
-                                    // if(distanceToResult > 0 && distanceToResult<2)
-                                    if(distanceToResult > 40)
-                                    {
-                                        var randomColor = Color.Red;//RandomColor();
-                                            matchCount++;
-                                            foreach (var pix in meter)
-                                            {
-                                                resPic.SetPixel(pix.X,pix.Y, randomColor);
-                                            }
-                                        }
-                                    }
-                            }
+                    {
+                        if(rect.Height > 10 && rect.Width > 10)
+                        { 
+                            points.Add(contour);
                         }
+                    }
+                }
+
+                Console.WriteLine("pic contours count after first filter:" + points.Count);
+
+                List<Point[]> pointInMiddel = new List<Point[]>();
+                foreach (var contour in points)
+                {
+                    // y mittelwert berechnen
+                    var mittel = 0;
+                    foreach (var y in contour)
+                    {
+                        mittel += y.Y;
+                    }
+                    mittel /= contour.Length;
+                    var imageHeight = src.Height;
+                    if (mittel > imageHeight/3 && mittel < imageHeight*2/3)
+                    {
+                        pointInMiddel.Add(contour);
+                    }
                 }
                 
+                DrawContours(pointInMiddel, org, hierarchyIndexes);
+                // evtl jetzt die y höhen behandlung???
+
+                // todo ie rechteckhöhe sollte ungefähr gleich sein, bzw die meisten sind die passendne
+
+                // zeichne Rechteck in orginal
+                foreach(var drawRect in pointInMiddel)
+                {
+                    Rect rectShowing = Cv2.BoundingRect(drawRect);
+                    Cv2.Rectangle(org, rectShowing, Scalar.Green,2,LineTypes.Filled);
+                }
+
+
+                Console.WriteLine("pic contours count after first filter:" + pointInMiddel.Count);
+
+
+                // todo mb crop the rect conturs
+
+
+                // Bitmap resPic = (Bitmap)Image.FromFile(fileName, true);
+                var matchCount = 0;
+                
+                //for (int contour = 0; contour < contours.Length; contour++)
+                //{
+                //    var rect = Cv2.BoundingRect(contours[contour]);
+                //    if (rect.Height > rect.Width)
+                //    { 
+                //        for (int contourOrg = 0; contourOrg < contoursOrg.Length; contourOrg++)
+                //        {
+                //            var oneContourOrgArray = contoursOrg[contourOrg];
+                //            var rectOrg = Cv2.BoundingRect(oneContourOrgArray);
+                //            // zu kleine konturen des orginal brauchen nicht untersucht werden, woher bekommt man im orginal nur eine Kontur???
+                //            //if (rect.Width > srcNumberOrg.Width * 0.3 && rect.Height > srcNumberOrg.Height * 0.4)
+                //                if (rectOrg.Height > rectOrg.Width)
+                //                {
+                //                    var meter=contours[contour];
+                //                    var org = contoursOrg[contourOrg];
+                //                    double distanceToResult = Cv2.MatchShapes(meter, org, ShapeMatchModes.I3, 0.0);
+
+                //                    var roi = new Mat(src, rectOrg); //Crop the image
+                //                    // http://www.dotnettips.info/post/2131/opencvsharp-18
+                //                    var results = new Mat();
+                //                    var neighborResponses = new Mat();
+                //                    var dists = new Mat();
+                //                    var resizedImage = new Mat();
+                //                    var resizedImageFloat = new Mat();
+                //                    Cv2.Resize(roi, resizedImage, new OpenCvSharp.Size(10, 10)); //resize to 10X10
+                //                    resizedImage.ConvertTo(resizedImageFloat, MatType.CV_32FC1); //convert to float
+                //                    var resultResize = resizedImageFloat.Reshape(1, 1);
+                //                    var kNeareast = OpenCvSharp.ML.KNearest.Create();
+                //                    var result = kNeareast.FindNearest(resultResize, 1, results, neighborResponses, dists);
+
+                //                    Console.WriteLine("res: " + distanceToResult);
+                //                    // if(distanceToResult > 0 && distanceToResult<2)
+                //                    if(distanceToResult > 40)
+                //                    {
+                //                        var randomColor = Color.Red;//RandomColor();
+                //                            matchCount++;
+                //                            foreach (var pix in meter)
+                //                            {
+                //                                resPic.SetPixel(pix.X,pix.Y, randomColor);
+                //                            }
+                //                        }
+                //                    }
+                //            }
+                //        }
+                //}
+                
                 Console.WriteLine("matchCount: " + matchCount);
-                resPic.Save(path + @"polFil_1_Result.jpg");
+                // resPic.Save(path + @"polFil_1_Result.jpg");
                 var resultPic = new Mat(path + @"polFil_1_Result.jpg");
-                new Window("resultPic", image: resultPic);
-                new Window("adaptiveTreshold", image: adaptiveTreshold);
-                new Window("srcNumberOrg", image: srcNumberOrg);
-                using (new Window("srcMorph", image: srcMorph))
+                //new Window("resultPic", image: resultPic);
+                //new Window("adaptiveTreshold", image: adaptiveTreshold);
+                new Window("org", image: org);
+                using (new Window("src", image: src))
                 {
                     Cv2.WaitKey(0);
                 }
@@ -127,13 +189,13 @@ namespace MeterImage
             Console.ReadKey();
         }
 
-        private static void GetValue(Point[][] contours, Mat adaptiveTreshold, HierarchyIndex[] hierarchyIndexes)
+        private static void DrawContours(/*Point[][]*/List<Point[]> contours, Mat mat, HierarchyIndex[] hierarchyIndexes)
         {
             int contourIndex = 0;
             foreach (var i in contours)
             {
                 Cv2.DrawContours(
-                    adaptiveTreshold,
+                    mat,
                     contours,
                     contourIndex,
                     color: Scalar.Red, //.All(j+1),
