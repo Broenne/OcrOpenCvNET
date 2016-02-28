@@ -1,4 +1,77 @@
-﻿//for (int contour = 0; contour < contours.Length; contour++)
+﻿using System;
+using System.Drawing;
+using OpenCvSharp;
+using Point = OpenCvSharp.Point;
+
+class PointArrayHelper
+{
+    public int Height { get; private set; }
+    public int Width { get; private set; }
+
+    public void ArraySize(Mat src, Point[] oneContourArray)
+    {
+        var minHeight = src.Height;
+        var maxHeight = 0;
+        var minWidth = src.Width;
+        var maxWidth = 0;
+        foreach (var point in oneContourArray)
+        {
+            if (point.X > maxHeight) maxHeight = point.X;
+            if (point.X < minHeight) minHeight = point.X;
+            if (point.Y > maxWidth) maxWidth = point.Y;
+            if (point.Y < minWidth) minWidth = point.Y;
+        }
+        this.Width = maxWidth - minWidth;
+        this.Height = maxHeight - minHeight;
+    }
+}
+
+
+//private static Mat SrcMorph(Mat adaptiveTreshold, string srcFilename)
+//{
+//    var srcMorph = adaptiveTreshold;
+//    var dstHelper = new Mat();
+//    for (int i = 0; i < 100; i++)
+//    {
+//        if (0 == i % 2)
+//        {
+//            Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.DILATE, new Mat());
+//            srcMorph = dstHelper;
+//            Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.DILATE, new Mat());
+//        }
+//        if (1 == i % 2)
+//        {
+//            Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.ERODE, new Mat());
+//            srcMorph = dstHelper;
+//            Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.ERODE, new Mat());
+//        }
+//        srcMorph = dstHelper;
+//    }
+//    //for (int i = 0; i < 5; i++)
+//    //{
+//    //    Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.ERODE, new Mat());
+//    //    srcMorph = dstHelper;
+//    //}
+//    //for (int i = 0; i < 5; i++)
+//    //{
+//    //    Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.DILATE, new Mat());
+//    //    srcMorph = dstHelper;
+//    //}
+//    srcMorph.SaveImage(path + srcFilename.Replace(".jpg", "_") + "morphology.jpg");
+//    return srcMorph;
+//}
+
+//private static Color RandomColor()
+//{
+//    Random randomGen = new Random();
+//    KnownColor[] names = (KnownColor[])Enum.GetValues(typeof(KnownColor));
+//    KnownColor randomColorName = names[randomGen.Next(names.Length)];
+//    Color randomColor = Color.FromKnownColor(randomColorName);
+//    return randomColor;
+//}
+
+
+//for (int contour = 0; contour < contours.Length; contour++)
 //{
 //    var rect = Cv2.BoundingRect(contours[contour]);
 //    if (rect.Height > rect.Width)

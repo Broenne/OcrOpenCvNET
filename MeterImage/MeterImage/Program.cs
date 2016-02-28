@@ -43,36 +43,21 @@ namespace MeterImage
 
                 // Todo mb: Bild an Kanten begradigen
 
-             
-
                 HierarchyIndex[] hierarchyIndexes;
                 Point[][] contours = GetContours(src, out hierarchyIndexes);
                 Console.WriteLine("pic contours count Start:" + contours);
                 // GetValue(contours, adaptiveTreshold, hierarchyIndexes);
                 //adaptiveTreshold.SaveImage(path + srcFilename.Replace(".jpg", "_") + "conturs.jpg");
-                
 
                 // Filter contours Höhe > Breite
-                Point[][] contoursHelper = (Point[][])contours.Clone();//= new Point;
-                List<Point[]> points = new List<Point[]>();
+                var points = ContourRextHeightBiggerWeight(contours);
 
-                contoursHelper.Initialize();
-                foreach (var contour in contours)
-                {
-                    Rect rect = Cv2.BoundingRect(contour);
-                    if (rect.Height > rect.Width)
-                    {
-                        if(rect.Height > 10 && rect.Width > 10)
-                        { 
-                            points.Add(contour);
-                        }
-                    }
-                }
+                var pointSize = ContoursDeleteToSmallOnes(points);
 
                 Console.WriteLine("pic contours count after first filter:" + points.Count);
 
                 //
-                var pointInMiddel = CheckContursInPictureMiddel(points, src);
+                var pointInMiddel = CheckContursInPictureMiddel(pointSize, src);
 
                 DrawContours(pointInMiddel, org, hierarchyIndexes);
                 // evtl jetzt die y höhen behandlung???
@@ -85,18 +70,12 @@ namespace MeterImage
                     Rect rectShowing = Cv2.BoundingRect(drawRect);
                     Cv2.Rectangle(org, rectShowing, Scalar.Green,2,LineTypes.Filled);
                 }
-
-
+                
                 Console.WriteLine("pic contours count after first filter:" + pointInMiddel.Count);
 
-
                 // todo mb crop the rect conturs
-
-
                 // Bitmap resPic = (Bitmap)Image.FromFile(fileName, true);
                 var matchCount = 0;
-                
-               
                 
                 Console.WriteLine("matchCount: " + matchCount);
                 // resPic.Save(path + @"polFil_1_Result.jpg");
@@ -118,6 +97,35 @@ namespace MeterImage
             }
 
             Console.ReadKey();
+        }
+
+        private static List<Point[]> ContoursDeleteToSmallOnes(List<Point[]> points)
+        {
+            List<Point[]> pointSize = new List<Point[]>();
+            foreach (var contour in points)
+            {
+                Rect rect = Cv2.BoundingRect(contour);
+
+                if (rect.Height > 10 && rect.Width > 10)
+                {
+                    pointSize.Add(contour);
+                }
+            }
+            return pointSize;
+        }
+
+        private static List<Point[]> ContourRextHeightBiggerWeight(Point[][] contours)
+        {
+            List<Point[]> points = new List<Point[]>();
+            foreach (var contour in contours)
+            {
+                Rect rect = Cv2.BoundingRect(contour);
+                if (rect.Height > rect.Width)
+                {
+                    points.Add(contour);
+                }
+            }
+            return points;
         }
 
         private static List<Point[]> CheckContursInPictureMiddel(List<Point[]> points, Mat src)
@@ -159,49 +167,6 @@ namespace MeterImage
             }
         }
 
-        private static Mat SrcMorph(Mat adaptiveTreshold, string srcFilename)
-        {
-            var srcMorph = adaptiveTreshold;
-            var dstHelper = new Mat();
-            for (int i = 0; i < 100; i++)
-            {
-                if (0 == i%2)
-                {
-                    Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.DILATE, new Mat());
-                    srcMorph = dstHelper;
-                    Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.DILATE, new Mat());
-                }
-                if (1 == i%2)
-                {
-                    Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.ERODE, new Mat());
-                    srcMorph = dstHelper;
-                    Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.ERODE, new Mat());
-                }
-                srcMorph = dstHelper;
-            }
-            //for (int i = 0; i < 5; i++)
-            //{
-            //    Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.ERODE, new Mat());
-            //    srcMorph = dstHelper;
-            //}
-            //for (int i = 0; i < 5; i++)
-            //{
-            //    Cv2.MorphologyEx(srcMorph, dstHelper, MorphTypes.DILATE, new Mat());
-            //    srcMorph = dstHelper;
-            //}
-            srcMorph.SaveImage(path + srcFilename.Replace(".jpg", "_") + "morphology.jpg");
-            return srcMorph;
-        }
-
-        private static Color RandomColor()
-        {
-            Random randomGen = new Random();
-            KnownColor[] names = (KnownColor[]) Enum.GetValues(typeof (KnownColor));
-            KnownColor randomColorName = names[randomGen.Next(names.Length)];
-            Color randomColor = Color.FromKnownColor(randomColorName);
-            return randomColor;
-        }
-
         private static Point[][] GetContours(Mat srcNumberOrg, out HierarchyIndex[] hierarchyIndexesOrg)
         {
             var dstNumberOrg = new Mat();
@@ -224,30 +189,4 @@ namespace MeterImage
             return contoursOrg;
         }
     }
-
-
-    class PointArrayHelper
-    {
-        public int Height { get; private set; }
-        public int Width { get; private set; }
-
-        public void ArraySize(Mat src, Point[] oneContourArray)
-        {
-            var minHeight = src.Height;
-            var maxHeight = 0;
-            var minWidth = src.Width;
-            var maxWidth = 0;
-            foreach (var point in oneContourArray)
-            {
-                if (point.X > maxHeight) maxHeight = point.X;
-                if (point.X < minHeight) minHeight = point.X;
-                if (point.Y > maxWidth) maxWidth = point.Y;
-                if (point.Y < minWidth) minWidth = point.Y;
-            }
-            this.Width = maxWidth - minWidth;
-            this.Height = maxHeight - minHeight;
-        }
-    }
-
-
 }
