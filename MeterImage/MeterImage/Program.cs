@@ -138,8 +138,68 @@ namespace MeterImage
 
         private static List<Mat> CropAndResizeTheImages(List<Point[]> orderedList, Mat src)
         {
-            var iterator = 0;
             List<Mat> digitList = new List<Mat>();
+            
+            var resultList = CropAndResize(orderedList, src);
+
+            // todo mb: result list ist hier falsch??!! esmuss ein zwischenergbnis rauskommen
+            var responseList = TrainTheDigitsToAList(resultList);
+
+            // train the list!!!!!!!!!!!!!!!!!!!!!!!!!
+            var kNearest = OpenCvSharp.ML.KNearest.Create();
+            var i = 0;
+            foreach (var item in resultList)
+            {
+                //(InputArray samples, SampleTypes layout, InputArray responses
+                kNearest.Train(item, SampleTypes.RowSample, responseList[i]);
+            }
+
+            Mat ocrResult = new Mat();
+
+            // sieht noch etwas unlogisch aus aber formt auch die dinger
+            Mat neighborResponses = new Mat();
+            Mat dists = new Mat();
+            var xxx = CropAndResize(orderedList, src);
+            foreach (var ppp in xxx)
+            {
+                var lll = kNearest.FindNearest(ppp, 1, ocrResult, neighborResponses, dists);
+            }
+            
+
+            //// noch nach außerhalb sonst immer dieselbe datei
+            //using (
+
+            //    FileStorage fs = new FileStorage(path + "data", FileStorage.Mode.Write))
+            //{
+            //    //fs.
+            //    //fs..WriteObj("result", result); //.GetFileNodeByName(null, nodeName);
+            //                                   //matrix = new Mat(fs.Read<CvMat>(param));
+            //}
+            return digitList;
+        }
+
+        private static List<Mat> TrainTheDigitsToAList(List<Mat> resultList)
+        {
+            List<Mat> responseList = new List<Mat>();
+            foreach (var res in resultList)
+            {
+                using (new Window("cropedResize", image: res))
+                {
+                    int key = Cv2.WaitKey(0);
+                    if (key > '0' && key < '9')
+                    {
+                        var response = new Mat(1, 1, MatType.CV_32FC1, (float) key - '0');
+                        responseList.Add(response);
+                    }
+                }
+            }
+            return responseList;
+        }
+
+
+        private static List<Mat> CropAndResize(List<Point[]> orderedList, Mat src)
+        {
+            List<Mat> resultList = new List<Mat>();
             foreach (Point[] digit in orderedList)
             {
                 var toCrop = Cv2.BoundingRect(digit);
@@ -147,29 +207,15 @@ namespace MeterImage
                 Mat cropedResize = new Mat();
                 OpenCvSharp.Size size = new OpenCvSharp.Size(600, 600);
                 Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
-                
+
                 var result = cropedResize.Reshape(1, 1);
                 result.ConvertTo(result, MatType.CV_32FC1); //convert to float
-
-                // todo mb hier dann noch image show
-                int key = Cv2.WaitKey(0);
-                //if (key > '0' && key < '9')
-                //{
-                    var response = new Mat(1, 1, MatType.CV_32FC1, (float)key - '0');
-                    //_samples.push_back(prepareSample(img));
-                //}
-
-                var kNearest = OpenCvSharp.ML.KNearest.Create();
-                //(InputArray samples, SampleTypes layout, InputArray responses
-
-
-                kNearest.Train(result, SampleTypes.RowSample, response);
+                resultList.Add(result);
             }
-            
-            //return kNearest;
-
-            return digitList;
+            return resultList;
         }
+
+        
 
         private static Mat ErodeMorpholgy(Mat src)
         {
