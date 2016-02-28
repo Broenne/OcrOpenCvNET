@@ -62,7 +62,9 @@ namespace MeterImage
                 var pointsBySizeToOtherRects = PointsBySizeToOtherRects(pointSize);
 
                 var contoursWithoutInner = RemoveInnerContourRects(pointsBySizeToOtherRects);
-                //noch die doppelten löschen? 
+
+
+                //TODOExtractByXabstand(contoursWithoutInner);
 
                 DrawContours(contoursWithoutInner, org, hierarchyIndexes);
                 // evtl jetzt die y höhen behandlung???
@@ -77,6 +79,32 @@ namespace MeterImage
                 }
                 
                 Console.WriteLine("pic contours count after first filter:" + pointInMiddel.Count);
+
+               
+                var orderedList = contoursWithoutInner.OrderBy((x) => Cv2.BoundingRect(x).Left).ToList();
+
+                foreach (var item in orderedList)
+                {
+                    var rect = Cv2.BoundingRect(item);
+                    Console.WriteLine(rect.Left);
+                }
+
+                //////////////////////////////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////////////////////////////////////////////
+                // croppedFaceImage = originalImage(faceRect).clone();
+                var iterator = 0;
+                //foreach(var digit in orderedList)
+                //{ 
+                    var toCrop = Cv2.BoundingRect(orderedList.Last());
+                    Mat croped = new Mat(org, toCrop);
+                    Mat cropedResize = new Mat();
+                    OpenCvSharp.Size size = new OpenCvSharp.Size(600,600);
+                    Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
+                    //roi.reshape(1, 1).convertTo(sample, CV_32F);
+                    var windowName = "cropedResize_" + iterator.ToString();
+                    new Window(windowName, image: cropedResize);
+                //}
+
 
                 // todo mb crop the rect conturs
                 // Bitmap resPic = (Bitmap)Image.FromFile(fileName, true);
@@ -102,6 +130,63 @@ namespace MeterImage
             }
 
             Console.ReadKey();
+        }
+
+
+
+
+        private static void TODOExtractByXabstand(List<Point[]> contoursWithoutInner)
+        {
+// sortiréren an Hand der linken KAnte
+            List<int> middle = new List<int>();
+            List<int> left = new List<int>();
+            foreach (var item in contoursWithoutInner)
+            {
+                var rect = Cv2.BoundingRect(item);
+                left.Add(rect.Left);
+                //int xMiddle = (rect.Left - rect.Right)/2;
+                //rect.Left;
+                //middle.Add(xMiddle);
+                //Console.WriteLine(xMiddle);
+            }
+            left.Sort();
+
+            for (int i = left.Count - 1; i > 0; i--)
+            {
+                var dis = left[i] - left[i - 1];
+                middle.Add(dis);
+            }
+
+            //var numbers = new List<int>();
+            var median = GetMedian(middle);
+            //noch die doppelten löschen? 
+
+            // wenn der abstand unter halben median, dann welchen löschen????
+            //List<Point[]> filterByMedian = new List<Point[]>();
+            //foreach (var cont in contoursWithoutInner)
+            //{
+            //    Rect rectInner = Cv2.BoundingRect(cont);
+            //    if()
+            //}
+        }
+
+        private static double GetMedian(List<int> numbers)
+        {
+            numbers.Sort();
+            int numberCount = numbers.Count();
+            int halfIndex = numberCount/2;
+            double median;
+            if ((numberCount%2) == 0)
+            {
+                var help = (numbers.ElementAt(halfIndex) + numbers.ElementAt(halfIndex - 1));
+                median = help/2;
+            }
+            else
+            {
+                median = numbers.ElementAt(halfIndex);
+            }
+            Debug.WriteLine(("Median is: " + median));
+            return median;
         }
 
         private static List<Point[]> RemoveInnerContourRects(List<Point[]> pointsBySizeToOtherRects)
