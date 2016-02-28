@@ -55,17 +55,22 @@ namespace MeterImage
                 var pointSize = ContoursDeleteToSmallOnes(points);
 
                 Console.WriteLine("pic contours count after first filter:" + points.Count);
-
-                //
+                
                 var pointInMiddel = CheckContursInPictureMiddel(pointSize, src);
+                // es darf jetzt eigentlich keine rechtecke mehr in rechtecken geben
 
-                DrawContours(pointInMiddel, org, hierarchyIndexes);
+                var pointsBySizeToOtherRects = PointsBySizeToOtherRects(pointSize);
+
+                var contoursWithoutInner = RemoveInnerContourRects(pointsBySizeToOtherRects);
+                //noch die doppelten löschen? 
+
+                DrawContours(contoursWithoutInner, org, hierarchyIndexes);
                 // evtl jetzt die y höhen behandlung???
 
                 // todo ie rechteckhöhe sollte ungefähr gleich sein, bzw die meisten sind die passendne
 
                 // zeichne Rechteck in orginal
-                foreach(var drawRect in pointInMiddel)
+                foreach(var drawRect in contoursWithoutInner)
                 {
                     Rect rectShowing = Cv2.BoundingRect(drawRect);
                     Cv2.Rectangle(org, rectShowing, Scalar.Green,2,LineTypes.Filled);
@@ -97,6 +102,62 @@ namespace MeterImage
             }
 
             Console.ReadKey();
+        }
+
+        private static List<Point[]> RemoveInnerContourRects(List<Point[]> pointsBySizeToOtherRects)
+        {
+            List<Point[]> contoursWithoutInner = new List<Point[]>();
+            var count = 0;
+            bool exist = false;
+            foreach (var cont in pointsBySizeToOtherRects)
+            {
+                // es wird bei allen rechtecken geschaut, ob sie in einem anderen liegen
+                Rect rectInner = Cv2.BoundingRect(cont);
+                exist = false;
+                foreach (var hhh in pointsBySizeToOtherRects)
+                {
+                    // hat rect inner noch was außen?, dann darf es nicht hinzugefügt werden
+                    Rect rectOuter = Cv2.BoundingRect(hhh);
+                    if (rectInner == rectOuter)
+                    {
+                        continue;
+                    }
+                    if (rectInner.Contains(rectOuter))
+                    {
+                        exist = true;
+                        Console.WriteLine("outer one exists");
+                    }
+                }
+                if (exist == false)
+                {
+                    contoursWithoutInner.Add(cont);
+                }
+                count++;
+            }
+            return contoursWithoutInner;
+        }
+
+        private static List<Point[]> PointsBySizeToOtherRects(List<Point[]> pointSize)
+        {
+// Berechnen der duchscnittshöhe
+            var avareageHeight = 0.0;
+            foreach (var cont in pointSize)
+            {
+                Rect rect = Cv2.BoundingRect(cont);
+                avareageHeight += rect.Height;
+            }
+            avareageHeight /= pointSize.Count;
+            Console.WriteLine("avareageHeight" + avareageHeight);
+            List<Point[]> pointsBySizeToOtherRects = new List<Point[]>();
+            foreach (var cont in pointSize)
+            {
+                Rect rect = Cv2.BoundingRect(cont);
+                if (rect.Height > avareageHeight*0.7)
+                {
+                    pointsBySizeToOtherRects.Add(cont);
+                }
+            }
+            return pointsBySizeToOtherRects;
         }
 
         private static List<Point[]> ContoursDeleteToSmallOnes(List<Point[]> points)
@@ -141,7 +202,7 @@ namespace MeterImage
                 }
                 mittel /= contour.Length;
                 var imageHeight = src.Height;
-                if (mittel > imageHeight/3 && mittel < imageHeight*2/3)
+                if (mittel > imageHeight/4 && mittel < imageHeight*1/4)
                 {
                     pointInMiddel.Add(contour);
                 }
