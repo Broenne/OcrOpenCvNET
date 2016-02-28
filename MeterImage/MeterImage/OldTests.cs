@@ -27,6 +27,18 @@ class PointArrayHelper
 }
 
 
+//// adaptive (dynamic) treshold
+//Cv2.AdaptiveThreshold(src, dst, 255, AdaptiveThresholdTypes.MeanC, ThresholdTypes.Binary, 11, 2.0);
+//    // was bringen die Nummern?
+//dst.SaveImage(path + srcFilename.Replace(".jpg", "_") + "adaptiveTreshold.jpg");
+
+
+//Console.WriteLine("matchCount: " + matchCount);
+//                // resPic.Save(path + @"polFil_1_Result.jpg");
+//                var resultPic = new Mat(path + @"polFil_1_Result.jpg");
+////new Window("resultPic", image: resultPic);
+////new Window("adaptiveTreshold", image: adaptiveTreshold);
+
 //private static Mat SrcMorph(Mat adaptiveTreshold, string srcFilename)
 //{
 //    var srcMorph = adaptiveTreshold;

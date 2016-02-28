@@ -35,26 +35,27 @@ namespace MeterImage
 
                 Console.WriteLine("size: row:" + src.Row + "  height: " + src.Height);
 
-                // adaptive (dynamic) treshold
-                Cv2.AdaptiveThreshold(src, dst, 255, AdaptiveThresholdTypes.MeanC, ThresholdTypes.Binary, 11, 2.0);
-                    // was bringen die Nummern?
-                dst.SaveImage(path + srcFilename.Replace(".jpg", "_") + "adaptiveTreshold.jpg");
-                
-
                 // Todo mb: Bild an Kanten begradigen
 
                 HierarchyIndex[] hierarchyIndexes;
-                Point[][] contours = GetContours(src, out hierarchyIndexes);
+                var contours = GetContours(src, out hierarchyIndexes);
                 Console.WriteLine("pic contours count Start:" + contours);
                 // GetValue(contours, adaptiveTreshold, hierarchyIndexes);
                 //adaptiveTreshold.SaveImage(path + srcFilename.Replace(".jpg", "_") + "conturs.jpg");
+
+
+                List<Point[]> drawer = new List<Point[]>();
+                foreach (var item in contours)
+                {
+                    drawer.Add(item);
+                }
+                DrawContours(drawer, org, hierarchyIndexes, Scalar.Red);
+
 
                 // Filter contours Höhe > Breite
                 var points = ContourRextHeightBiggerWeight(contours);
 
                 var pointSize = ContoursDeleteToSmallOnes(points);
-
-                Console.WriteLine("pic contours count after first filter:" + points.Count);
                 
                 var pointInMiddel = CheckContursInPictureMiddel(pointSize, src);
                 // es darf jetzt eigentlich keine rechtecke mehr in rechtecken geben
@@ -63,10 +64,9 @@ namespace MeterImage
 
                 var contoursWithoutInner = RemoveInnerContourRects(pointsBySizeToOtherRects);
 
-
                 //TODOExtractByXabstand(contoursWithoutInner);
 
-                DrawContours(contoursWithoutInner, org, hierarchyIndexes);
+                DrawContours(contoursWithoutInner, org, hierarchyIndexes, Scalar.AliceBlue);
                 // evtl jetzt die y höhen behandlung???
 
                 // todo ie rechteckhöhe sollte ungefähr gleich sein, bzw die meisten sind die passendne
@@ -93,28 +93,33 @@ namespace MeterImage
                 //////////////////////////////////////////////////////////////////////////////////////
                 // croppedFaceImage = originalImage(faceRect).clone();
                 var iterator = 0;
-                //foreach(var digit in orderedList)
-                //{ 
-                    var toCrop = Cv2.BoundingRect(orderedList.Last());
-                    Mat croped = new Mat(org, toCrop);
+                List<Mat> digitList = new List<Mat>();
+                foreach (var digit in orderedList)
+                {
+                    var toCrop = Cv2.BoundingRect(digit);
+                    Mat croped = new Mat(src, toCrop);
                     Mat cropedResize = new Mat();
                     OpenCvSharp.Size size = new OpenCvSharp.Size(600,600);
                     Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
                     //roi.reshape(1, 1).convertTo(sample, CV_32F);
-                    var windowName = "cropedResize_" + iterator.ToString();
-                    new Window(windowName, image: cropedResize);
-                //}
+                    digitList.Add(cropedResize);
+                }
+
+                foreach (var digPic in digitList)
+                {
+                    var windowName = "cropedResize_" + new Random();
+
+                    using (new Window(windowName, image: digPic))
+                    {
+                        Cv2.WaitKey(0);
+                    };
+                    //Console.ReadKey();
+                }
 
 
                 // todo mb crop the rect conturs
                 // Bitmap resPic = (Bitmap)Image.FromFile(fileName, true);
                 var matchCount = 0;
-                
-                Console.WriteLine("matchCount: " + matchCount);
-                // resPic.Save(path + @"polFil_1_Result.jpg");
-                var resultPic = new Mat(path + @"polFil_1_Result.jpg");
-                //new Window("resultPic", image: resultPic);
-                //new Window("adaptiveTreshold", image: adaptiveTreshold);
                 new Window("org", image: org);
                 using (new Window("src", image: src))
                 {
@@ -295,7 +300,7 @@ namespace MeterImage
             return pointInMiddel;
         }
 
-        private static void DrawContours(/*Point[][]*/List<Point[]> contours, Mat mat, HierarchyIndex[] hierarchyIndexes)
+        private static void DrawContours(List<Point[]> contours, Mat mat, HierarchyIndex[] hierarchyIndexes, Scalar color)
         {
             int contourIndex = 0;
             foreach (var i in contours)
@@ -304,7 +309,7 @@ namespace MeterImage
                     mat,
                     contours,
                     contourIndex,
-                    color: Scalar.Red, //.All(j+1),
+                    color: color, //.All(j+1),
                     thickness: -1,
                     lineType: LineTypes.Link8,
                     hierarchy: hierarchyIndexes,
