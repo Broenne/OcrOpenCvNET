@@ -124,6 +124,7 @@ namespace MeterImage
                 {
                     Cv2.WaitKey(0);
                 }
+
             }
             catch (System.IO.FileNotFoundException ex)
             {
@@ -139,19 +140,34 @@ namespace MeterImage
         {
             var iterator = 0;
             List<Mat> digitList = new List<Mat>();
-            foreach (var digit in orderedList)
+            foreach (Point[] digit in orderedList)
             {
                 var toCrop = Cv2.BoundingRect(digit);
                 Mat croped = new Mat(src, toCrop);
                 Mat cropedResize = new Mat();
                 OpenCvSharp.Size size = new OpenCvSharp.Size(600, 600);
                 Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
+                
+                var result = cropedResize.Reshape(1, 1);
+                result.ConvertTo(result, MatType.CV_32FC1); //convert to float
 
-                Mat sampleNumber = new Mat();
-                cropedResize.ConvertTo(sampleNumber, MatType.CV_32FC1); //convert to float
-                var result = sampleNumber.Reshape(1, 1);
-                digitList.Add(cropedResize);
+                // todo mb hier dann noch image show
+                int key = Cv2.WaitKey(0);
+                //if (key > '0' && key < '9')
+                //{
+                    var response = new Mat(1, 1, MatType.CV_32FC1, (float)key - '0');
+                    //_samples.push_back(prepareSample(img));
+                //}
+
+                var kNearest = OpenCvSharp.ML.KNearest.Create();
+                //(InputArray samples, SampleTypes layout, InputArray responses
+
+
+                kNearest.Train(result, SampleTypes.RowSample, response);
             }
+            
+            //return kNearest;
+
             return digitList;
         }
 
