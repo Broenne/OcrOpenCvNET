@@ -17,12 +17,14 @@ namespace MeterImage
 {
     class Program
     {
-        const string path = @"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic1\";
-
+        //const string path = @"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic1\";
+        //const string srcFilename = "GGG.jpg";
+        const string path = @"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic2\";
+        const string srcFilename = "Snipet_WP_20160226_017.jpg";
         static void Main(string[] args)
         {
             Console.WriteLine("Hello");
-            const string srcFilename = "GGG.jpg";
+            
 
             try
             {
@@ -31,14 +33,19 @@ namespace MeterImage
                 Mat org = new Mat(fileName, ImreadModes.Color);
                 // hier umkopier und nach grau anstatt d´doppelt
                 Mat src = new Mat(fileName, ImreadModes.GrayScale); // OpenCvSharp 3.x
-                Mat dst = new Mat();
-
+               
                 Console.WriteLine("size: row:" + src.Row + "  height: " + src.Height);
+
+                // ACHTUNG!!!!!
+                // Hier morph test!!! diese wird gemacht um die linie weg zu bekommen
+                var srcMorph = ErodeMorpholgy(src);
+                new Window("MorpH", image: srcMorph);
 
                 // Todo mb: Bild an Kanten begradigen
 
                 HierarchyIndex[] hierarchyIndexes;
-                var contours = GetContours(src, out hierarchyIndexes);
+                var contours = GetContours(srcMorph, out hierarchyIndexes);
+                //var contours = GetContours(src, out hierarchyIndexes);
                 Console.WriteLine("pic contours count Start:" + contours);
                 // GetValue(contours, adaptiveTreshold, hierarchyIndexes);
                 //adaptiveTreshold.SaveImage(path + srcFilename.Replace(".jpg", "_") + "conturs.jpg");
@@ -107,13 +114,14 @@ namespace MeterImage
                     digitList.Add(cropedResize);
                 }
 
+                Console.WriteLine("Found Contours:" + digitList.Count);
                 foreach (var digPic in digitList)
                 {
                     var windowName = "cropedResize_" + new Random();
 
                     using (new Window(windowName, image: digPic))
                     {
-                        // Cv2.WaitKey(0);
+                        Cv2.WaitKey(0);
                     }
                 }
 
@@ -126,7 +134,6 @@ namespace MeterImage
                 {
                     Cv2.WaitKey(0);
                 }
-
             }
             catch (System.IO.FileNotFoundException ex)
             {
@@ -138,8 +145,17 @@ namespace MeterImage
             Console.ReadKey();
         }
 
-
-
+        private static Mat ErodeMorpholgy(Mat src)
+        {
+            Mat morphHelper = new Mat();
+            var srcMorph = src;
+            for (var morphCount = 0; morphCount < 3; morphCount++)
+            {
+                Cv2.MorphologyEx(srcMorph, morphHelper, MorphTypes.ERODE, new Mat());
+                srcMorph = morphHelper;
+            }
+            return srcMorph;
+        }
 
         private static void TODOExtractByXabstand(List<Point[]> contoursWithoutInner)
         {
