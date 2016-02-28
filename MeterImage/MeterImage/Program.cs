@@ -80,8 +80,10 @@ namespace MeterImage
                 
                 Console.WriteLine("pic contours count after first filter:" + pointInMiddel.Count);
 
-               
-                var orderedList = contoursWithoutInner.OrderBy((x) => Cv2.BoundingRect(x).Left).ToList();
+               // sortieren der Buchstaben / Contouren
+                var orderedList = contoursWithoutInner
+                    .OrderBy((x) => Cv2.BoundingRect(x).Left)
+                    .ToList();
 
                 foreach (var item in orderedList)
                 {
@@ -111,9 +113,8 @@ namespace MeterImage
 
                     using (new Window(windowName, image: digPic))
                     {
-                        Cv2.WaitKey(0);
-                    };
-                    //Console.ReadKey();
+                        // Cv2.WaitKey(0);
+                    }
                 }
 
 
