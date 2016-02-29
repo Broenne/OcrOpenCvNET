@@ -18,7 +18,7 @@ namespace SnipOutNumbers
 
     public class ImageHelper : IImageHelper
     {
-        private readonly System.Drawing.Image myImg;
+        public readonly System.Drawing.Image myImg;
 
         public ImageHelper(string fileName)
         {
@@ -50,7 +50,6 @@ namespace SnipOutNumbers
         public ImageSource BitmapToImageSource(Bitmap bm)
         { 
             // todo in helper class
-
             MemoryStream ms = new MemoryStream();
             bm.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
             ms.Position = 0;

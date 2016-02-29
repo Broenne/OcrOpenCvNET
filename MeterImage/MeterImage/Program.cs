@@ -412,6 +412,8 @@ namespace MeterImage
             var dstNumberOrg = new Mat();
             Cv2.Canny(srcNumberOrg, dstNumberOrg, 80, 80); //src
             
+            // todo mb sobel könnte deutlich besser funktionieren?! siehe bild von aforge.net
+            //Cv2.Sobel(srcNumberOrg, dstNumberOrg,MatType.CV_16S, .80, 80);
             Point[][] contoursOrg;
             // HierarchyIndex[] hierarchyIndexesOrg;
             Cv2.FindContours(
