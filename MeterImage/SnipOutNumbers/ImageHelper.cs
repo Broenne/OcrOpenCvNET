@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace SnipOutNumbers
@@ -43,6 +44,20 @@ namespace SnipOutNumbers
         public Bitmap JpgToBitmap()
         {
             Bitmap bi = new Bitmap(myImg);
+            return bi;
+        }
+
+        public ImageSource BitmapToImageSource(Bitmap bm)
+        { 
+            // todo in helper class
+
+            MemoryStream ms = new MemoryStream();
+            bm.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            ms.Position = 0;
+            BitmapImage bi = new BitmapImage();
+            bi.BeginInit();
+            bi.StreamSource = ms;
+            bi.EndInit();
             return bi;
         }
 
