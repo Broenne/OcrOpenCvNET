@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
+using Autofac;
 
 namespace SnipOutNumbers
 {
@@ -13,5 +8,14 @@ namespace SnipOutNumbers
     /// </summary>
     public partial class App : Application
     {
+        public static IContainer Container { get; private set; }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+            var builder = new ContainerBuilder();
+            builder.RegisterType<ImageHelper>().As<IImageHelper>();
+            Container = builder.Build();
+        }
     }
 }
