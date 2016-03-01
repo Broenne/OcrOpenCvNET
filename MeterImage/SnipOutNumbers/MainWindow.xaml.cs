@@ -14,6 +14,7 @@ using AForge.Imaging;
 using AForge.Imaging.Filters;
 using AForge.Math.Geometry;
 using Autofac.Core;
+using Color = System.Drawing.Color;
 using Image = System.Windows.Controls.Image;
 using Point = System.Drawing.Point;
 
@@ -35,6 +36,7 @@ namespace SnipOutNumbers
         {
             // todo Achtung, für die richtige verwendung von autofac use MVVM
             var imageSrc = new ImageHelper(@"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic1\WP_20160226_006.jpg");
+            //var imageSrc = new ImageHelper(@"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic2\WP_20160226_017.jpg");
             this.image.Source = imageSrc.JpgToBitmapImage();
             // create filter
             //HomogenityEdgeDetector filter = new HomogenityEdgeDetector();
@@ -126,27 +128,41 @@ namespace SnipOutNumbers
 
                 if (histogram.ContainsKey(helper))
                 {
-                    histogram[helper]++;
+                    histogram[helper]++; // anzahl erhöhen in welchem y-bereich es viele gibt
                 }
                 else {
                     histogram[helper] = 1;
                 }
             }
 
-            histogram.OrderBy(y => y.Value);
-            
+            // hier wird danach sortiert, wo es die meisten xPunkte gibt, allerding geteilt durch da oben
+            //histogram.OrderBy(x => x.Value);
+            histogram.ToList();
+            SortedList<uint, int> histogramSortedList= new SortedList<uint, int>(histogram);
+            //var help = histogramSortedList.OrderBy(x => x.Value);
+            //histogramSortedList = help;
+            var bbb=histogramSortedList.OrderBy(x => x.Value);
+            // list umdrehen, nach den meisten....
             List<int> tops = new List<int>();
             uint j = 0;
-            for (uint i = (uint)histogram.Count(); i > histogram.Count()-10; i--, j++)
+            // achtung, warum schwankt der count?????????
+            // count . Nummer ist die ANZHAL!!!!!!!!!!!
+            for (uint i = (uint)bbb.Count() - 1; i > bbb.Count()-20; i--, j++)
             {
-                tops.Add(histogram[j]);
+                tops.Add(histogramSortedList.ElementAt((int)i).Value); // hier nicht value sondern key
+            }
+            
+            pen.Width = 10;
+            for(int i=0;i<tops.Count;i++)
+            {
+                graphics.DrawLine(pen,new Point(0,tops[i]*10),new Point(image.Width, tops[i] * 10));
+                
             }
 
-            // Visualization: Draw 3x3 boxes around the corners
+            pen.Color = Color.Blue;
             foreach (IntPoint corner in corners)
             {
-                graphics.DrawLine(pen,new Point(0,200),new Point(image.Width, 200));
-                // graphics.DrawRectangle(pen, corner.X - 1, corner.Y - 1, 3, 3);
+                graphics.DrawRectangle(pen, corner.X - 1, corner.Y - 1, 10, 10);
             }
 
             // Display
