@@ -35,8 +35,8 @@ namespace SnipOutNumbers
         private void btnLoad_Click(object sender, RoutedEventArgs e)
         {
             // todo Achtung, für die richtige verwendung von autofac use MVVM
-            var imageSrc = new ImageHelper(@"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic1\WP_20160226_006.jpg");
-            //var imageSrc = new ImageHelper(@"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic2\WP_20160226_017.jpg");
+            //var imageSrc = new ImageHelper(@"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic1\WP_20160226_006.jpg");
+            var imageSrc = new ImageHelper(@"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic2\WP_20160226_017.jpg");
             this.image.Source = imageSrc.JpgToBitmapImage();
             // create filter
             //HomogenityEdgeDetector filter = new HomogenityEdgeDetector();
@@ -166,18 +166,18 @@ namespace SnipOutNumbers
             //var res = Top10.ToList();
             
             
-            pen.Width = 10;
+            pen.Width = 5;
             for(int i=0;i< Top10.Count;i++)
             {
                 graphics.DrawLine(pen,new Point(0, (int)Top10[i].Key*10),new Point(image.Width, (int)Top10[i].Key * 10));
                 
             }
 
-            pen.Color = Color.Blue;
-            foreach (IntPoint corner in corners)
-            {
-                graphics.DrawRectangle(pen, corner.X - 1, corner.Y - 1, 10, 10);
-            }
+            //pen.Color = Color.Blue;
+            //foreach (IntPoint corner in corners)
+            //{
+            //    graphics.DrawRectangle(pen, corner.X - 1, corner.Y - 1, 10, 10);
+            //}
 
             // Display
             return image;
