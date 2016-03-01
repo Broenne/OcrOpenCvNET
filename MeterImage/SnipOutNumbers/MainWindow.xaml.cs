@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Windows;
 using System.Windows.Media;
@@ -14,6 +15,7 @@ using AForge.Imaging.Filters;
 using AForge.Math.Geometry;
 using Autofac.Core;
 using Image = System.Windows.Controls.Image;
+using Point = System.Drawing.Point;
 
 namespace SnipOutNumbers
 {
@@ -43,48 +45,48 @@ namespace SnipOutNumbers
             var filter = new SobelEdgeDetector();//new CannyEdgeDetector();
             Bitmap edge = filter.Apply(gsImage);
 
+            //// locating objects
+            //BlobCounter blobCounter = new BlobCounter();
+            //blobCounter.FilterBlobs = true;
+            //blobCounter.MinHeight = 5;
+            //blobCounter.MinWidth = 5;
+            //blobCounter.ProcessImage(edge);
+            //Blob[] blobs = blobCounter.GetObjectsInformation();
+            //// check for rectangles
+            //SimpleShapeChecker shapeChecker = new SimpleShapeChecker();
 
+            //// create convex hull searching algorithm
+            //GrahamConvexHull hullFinder = new GrahamConvexHull();
+            //// Bitmap tempBitmap = new Bitmap(imageBm.Width, imageBm.Height);
+            //// lock image to draw on it
+            //BitmapData data = imageBm.LockBits(
+            //    new Rectangle(0, 0, imageBm.Width, imageBm.Height),
+            //        ImageLockMode.ReadWrite, imageBm.PixelFormat);
 
-            // locating objects
-            BlobCounter blobCounter = new BlobCounter();
-            blobCounter.FilterBlobs = true;
-            blobCounter.MinHeight = 5;
-            blobCounter.MinWidth = 5;
-            blobCounter.ProcessImage(edge);
-            Blob[] blobs = blobCounter.GetObjectsInformation();
-            // check for rectangles
-            SimpleShapeChecker shapeChecker = new SimpleShapeChecker();
+            //List<IntPoint> edgePoints = new List<IntPoint>();
+            //List<System.Drawing.Point> Points = new List<Point>();
+            //foreach (var blob in blobs)
+            //{
+            //    List<IntPoint> leftPoints, rightPoints;//, edgePoints;
 
-            foreach (var blob in blobs)
-            {
-                List<IntPoint> edgePoints = blobCounter.GetBlobsEdgePoints(blob);
-                List<IntPoint> cornerPoints;
+            //    // get blob's edge points
+            //    blobCounter.GetBlobsLeftAndRightEdges(blob,//blobs[i]
+            //        out leftPoints, out rightPoints);
+            //    edgePoints.AddRange(leftPoints);
+            //    edgePoints.AddRange(rightPoints);
+            //    // blob's convex hull
+            //    List<IntPoint> hull = hullFinder.FindHull(edgePoints);
+            //    AForge.Imaging.Drawing.Polygon( data, hull, System.Drawing.Color.Red );
+            //    //    }
+            //    //}
+            //}
+            //imageBm.UnlockBits(data);
+            ////Graphics g = Graphics.FromImage(/*imageSrc.myImg*/tempBitmap);
+            ////g.DrawPolygon(new System.Drawing.Pen(System.Drawing.Color.Red, 5.0f), Points.ToArray());
+            //this.imageGray.Source = imageSrc.BitmapToImageSource(imageBm);
+            ////imageSrc.myImg.Save("result.png");
 
-                // use the shape checker to extract the corner points
-                if (shapeChecker.IsQuadrilateral(edgePoints, out cornerPoints))
-                {
-                    // only do things if the corners form a rectangle
-                    //if (shapeChecker.CheckPolygonSubType(cornerPoints) == PolygonSubType.Rectangle)
-                    //{
-                        // here i use the graphics class to draw an overlay, but you
-                        // could also just use the cornerPoints list to calculate your
-                        // x, y, width, height values.
-                        var Points = new List<System.Drawing.Point>();
-                        foreach (var point in cornerPoints)
-                        {
-                            Points.Add(new System.Drawing.Point(point.X, point.Y));
-                        }
-                        
-                        Graphics g = Graphics.FromImage(imageSrc.myImg);
-                        g.DrawPolygon(new System.Drawing.Pen(System.Drawing.Color.Red, 5.0f), Points.ToArray());
-
-                        imageSrc.myImg.Save("result.png");
-                    //}
-                }
-            }
-
-
-
+            imageGray.Source = imageSrc.BitmapToImageSource(this.DetectCorners(imageBm));
 
             //HoughLineTransformation lineTransform = new HoughLineTransformation();
             //// apply Hough line transofrm
@@ -101,6 +103,85 @@ namespace SnipOutNumbers
             //this.imageGray.Source = imageSrc.BitmapToImageSource(lineTransform.ToBitmap());
 
         }
+
+
+        public Bitmap DetectCorners(Bitmap image)
+        {
+            // Load image and create everything you need for drawing
+            //Bitmap image = new Bitmap(@"myimage.jpg");
+            Graphics graphics = Graphics.FromImage(image);
+            SolidBrush brush = new SolidBrush(System.Drawing.Color.Red);
+            System.Drawing.Pen pen = new System.Drawing.Pen(brush);
+
+            // Create corner detector and have it process the image
+            MoravecCornersDetector mcd = new MoravecCornersDetector();
+            List<IntPoint> corners = mcd.ProcessImage(image);
+
+            SortedDictionary<uint, int> histogram = new SortedDictionary<uint, int>();
+
+            foreach (var item in corners.Where(x=>x.Y == x.Y))
+            {
+                var helper = (uint) item.Y;
+                helper /= 10;// so jetzt machen wir es ungenau!!!!
+
+                if (histogram.ContainsKey(helper))
+                {
+                    histogram[helper]++;
+                }
+                else {
+                    histogram[helper] = 1;
+                }
+            }
+
+            histogram.OrderBy(y => y.Value);
+            
+            List<int> tops = new List<int>();
+            uint j = 0;
+            for (uint i = (uint)histogram.Count(); i > histogram.Count()-10; i--, j++)
+            {
+                tops.Add(histogram[j]);
+            }
+
+            // Visualization: Draw 3x3 boxes around the corners
+            foreach (IntPoint corner in corners)
+            {
+                graphics.DrawLine(pen,new Point(0,200),new Point(image.Width, 200));
+                // graphics.DrawRectangle(pen, corner.X - 1, corner.Y - 1, 3, 3);
+            }
+
+            // Display
+            return image;
+        }
+
+        private System.Drawing.Point[] ToPointsArray(List<IntPoint> points)
+
+        {
+            System.Drawing.Point[] array = new System.Drawing.Point[points.Count];
+
+            for (int i = 0, n = points.Count; i < n; i++)
+            {
+                array[i] = new System.Drawing.Point(points[i].X, points[i].Y);
+            }
+
+            return array;
+        }
+
+
+
+        //// use the shape checker to extract the corner points
+        //if (shapeChecker.IsQuadrilateral(edgePoints, out cornerPoints))
+        //{
+        //    // only do things if the corners form a rectangle
+        //    if (shapeChecker.CheckPolygonSubType(cornerPoints) == PolygonSubType.Rectangle)
+        //    {
+        // here i use the graphics class to draw an overlay, but you
+        // could also just use the cornerPoints list to calculate your
+        //// x, y, width, height values.
+        //Points = new List<System.Drawing.Point>();
+                //foreach (var point in edgePoints)//cornerPoints)
+                //{
+                //    Points.Add(new System.Drawing.Point(point.X, point.Y));
+
 
         private static UnmanagedImage UnmanagedImage(HoughLineTransformation lineTransform, Bitmap imageBm, Bitmap edge)
         {
