@@ -143,19 +143,33 @@ namespace SnipOutNumbers
             //histogramSortedList = help;
             var bbb=histogramSortedList.OrderBy(x => x.Value);
             // list umdrehen, nach den meisten....
-            List<int> tops = new List<int>();
-            uint j = 0;
+            List<KeyValuePair<uint,int>> tops = new List<KeyValuePair<uint, int>>();
+            uint j =199; //TODO Wie hier an die 199 kommen???
             // achtung, warum schwankt der count?????????
             // count . Nummer ist die ANZHAL!!!!!!!!!!!
-            for (uint i = (uint)bbb.Count() - 1; i > bbb.Count()-20; i--, j++)
-            {
-                tops.Add(histogramSortedList.ElementAt((int)i).Value); // hier nicht value sondern key
+            //for (uint i = (uint)bbb.Count() - 1; i > bbb.Count()-20; i--, j--)
+            //{
+            foreach(var item in bbb)
+            { 
+                //histogramSortedList.IndexOfKey(23);
+                tops.Add(new KeyValuePair<uint, int>(item.Key,item.Value)); // hier nicht value sondern key
             }
+            var hhh = tops.ToArray();
+
+            // Top 10
+            List<KeyValuePair<uint, int>> Top10 = new List<KeyValuePair<uint, int>>();
+            for (int i=tops.Count;i>tops.Count-10;i--)
+            {
+                Top10.Add(hhh[i-1]);
+            }
+
+            //var res = Top10.ToList();
+            
             
             pen.Width = 10;
-            for(int i=0;i<tops.Count;i++)
+            for(int i=0;i< Top10.Count;i++)
             {
-                graphics.DrawLine(pen,new Point(0,tops[i]*10),new Point(image.Width, tops[i] * 10));
+                graphics.DrawLine(pen,new Point(0, (int)Top10[i].Key*10),new Point(image.Width, (int)Top10[i].Key * 10));
                 
             }
 
