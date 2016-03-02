@@ -147,7 +147,7 @@ namespace MeterImage
             
             var resultList = CropAndResize(orderedList, src);
 
-            //var responseList = TrainTheDigitsToAList(orderedList);
+            //var responseList = TrainTheDigitsToAList(resultList);
 
 
             //// train the list!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -183,28 +183,32 @@ namespace MeterImage
             return digitList;
         }
 
-        private static List<Mat> TrainTheDigitsToAList(List<Mat> resultList)
+        private static int TrainOneDigit(Mat digitMat, List<Mat> imageAndNumberInCombination)
         {
-            List<Mat> responseList = new List<Mat>();
-            foreach (var res in resultList)
+            //List<Mat> responseList = new List<Mat>();
+            //foreach (var res in resultList)
+            //{
+            //}
+            int key = 0;
+            using (new Window("cropedResize", image: digitMat))
             {
-                using (new Window("cropedResize", image: res))
+                var keyAscii = (char)Cv2.WaitKey(0); // standard liest als ascii
+                key = (int)Char.GetNumericValue(keyAscii);
+                if (key >= 0 && key <= 9)
                 {
-                    int key = Cv2.WaitKey(0);
-                    if (key > '0' && key < '9')
-                    {
-                        var response = new Mat(1, 1, MatType.CV_32FC1, (float) key - '0');
-                        responseList.Add(response);
-                    }
+                    // todo, das muss jetzt in eine neue Liste
+                    var response = new Mat(1, 1, MatType.CV_32FC1, (float) key);// - '0');
+                    imageAndNumberInCombination.Add(response);
+                    //responseList.Add(response);
                 }
             }
-            return responseList;
+            return key;
         }
 
 
         private static List<Mat> CropAndResize(List<Point[]> orderedList, Mat src)
         {
-            List<Mat> resultList = new List<Mat>();
+            List<Mat> resultFloatList = new List<Mat>();
             List<Mat> cropedResizeList = new List<Mat>();
             foreach (Point[] digit in orderedList)
             {
@@ -216,29 +220,27 @@ namespace MeterImage
                 Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
 
                 cropedResizeList.Add(cropedResize);
-
-                //var result = cropedResize.Reshape(1, 1);
-                //result.ConvertTo(result, MatType.CV_32FC1); //convert to float
-
                 //resultList.Add(result);
             }
 
-            resultList = ConvertToFloatImage(cropedResizeList);
+            resultFloatList = ConvertToFloatImage(cropedResizeList);
 
             // todo mb!!!!!!!!!!!!!
-            var responseList = TrainTheDigitsToAList(cropedResizeList);
-            return resultList;
+            //var responseList = TrainTheDigitsToAList(cropedResizeList);
+            return resultFloatList;
         }
 
         // return the 
         private static List<Mat> ConvertToFloatImage(List<Mat> cropedList)
         {
             List<Mat> resultList = new List<Mat>();
+            List<Mat> imageAndNumberInCombination = new List<Mat>();
             foreach (var cropedResize in cropedList)
             { 
                 var result = cropedResize.Reshape(1, 1);
                 result.ConvertTo(result, MatType.CV_32FC1); //convert to float
                 resultList.Add(result);
+                TrainOneDigit(cropedResize, imageAndNumberInCombination);
             }
             return resultList;
         }
