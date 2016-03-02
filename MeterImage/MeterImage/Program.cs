@@ -183,7 +183,7 @@ namespace MeterImage
             return digitList;
         }
 
-        private static int TrainOneDigit(Mat digitMat, List<Mat> imageAndNumberInCombination)
+        private static int TrainOneDigit(Mat digitMat, List<Mat> responseList)
         {
             //List<Mat> responseList = new List<Mat>();
             //foreach (var res in resultList)
@@ -198,13 +198,15 @@ namespace MeterImage
                 {
                     // todo, das muss jetzt in eine neue Liste
                     var response = new Mat(1, 1, MatType.CV_32FC1, (float) key);// - '0');
-                    imageAndNumberInCombination.Add(response);
+                    responseList.Add(response);
                     //responseList.Add(response);
+                    
                 }
             }
             return key;
         }
 
+        private static KNearest kNearest = OpenCvSharp.ML.KNearest.Create();
 
         private static List<Mat> CropAndResize(List<Point[]> orderedList, Mat src)
         {
@@ -212,12 +214,7 @@ namespace MeterImage
             List<Mat> cropedResizeList = new List<Mat>();
             foreach (Point[] digit in orderedList)
             {
-                var toCrop = Cv2.BoundingRect(digit);
-                Mat croped = new Mat(src, toCrop);
-                Mat cropedResize = new Mat();
-
-                OpenCvSharp.Size size = new OpenCvSharp.Size(600, 600);
-                Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
+                var cropedResize = CropedResizeOneImage(src, digit);
 
                 cropedResizeList.Add(cropedResize);
                 //resultList.Add(result);
@@ -225,24 +222,65 @@ namespace MeterImage
 
             resultFloatList = ConvertToFloatImage(cropedResizeList);
 
+            
+            Mat results = new Mat();
+            Mat neighborResponses=new Mat();
+            Mat dists=new Mat();
+
+            // mal in dem eigen Bild suchen
+            // muss er ja immer finden
+            var test = src; //ImageToFloat
+            var xxx=CropedResizeOneImage(test, orderedList.First());
+            var help=ImageToFloat(xxx);
+            // hier müssen noch die Daten rein, sonst geht es garantiert nicht
+            
+            
+            //http://shimat.github.io/opencvsharp/html/3655b4c2-fc6e-49c5-c8db-ba90e85a9110.htm
+            var lll = kNearest.FindNearest(/*samples:*/new Mat(), 1, /*hier das "gelernte rein"*/results, neighborResponses, dists);
+
             // todo mb!!!!!!!!!!!!!
             //var responseList = TrainTheDigitsToAList(cropedResizeList);
             return resultFloatList;
+        }
+
+        private static Mat CropedResizeOneImage(Mat src, Point[] digit)
+        {
+            var toCrop = Cv2.BoundingRect(digit);
+            Mat croped = new Mat(src, toCrop);
+            Mat cropedResize = new Mat();
+
+            OpenCvSharp.Size size = new OpenCvSharp.Size(600, 600);
+            Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
+            return cropedResize;
         }
 
         // return the 
         private static List<Mat> ConvertToFloatImage(List<Mat> cropedList)
         {
             List<Mat> resultList = new List<Mat>();
-            List<Mat> imageAndNumberInCombination = new List<Mat>();
+            List<Mat> responseList = new List<Mat>();
             foreach (var cropedResize in cropedList)
             { 
-                var result = cropedResize.Reshape(1, 1);
-                result.ConvertTo(result, MatType.CV_32FC1); //convert to float
+                var result = ImageToFloat(cropedResize);
                 resultList.Add(result);
-                TrainOneDigit(cropedResize, imageAndNumberInCombination);
+                TrainOneDigit(cropedResize, responseList);
             }
+            // hier wirds antrainiert
+            //var hhh=new TrainData//  (imageAndNumberInCombination, new Mat())
+            //public virtual bool Train(InputArray samples, SampleTypes layout, InputArray responses);
+            //InputArray kkk= new InputArray(imageAndNumberInCombination);
+            var response = InputArray.Create(responseList.First());// imageAndNumberInCombination.ToArray();
+            var image = resultList.First();
+            kNearest.Train(response, SampleTypes.RowSample, image);
+
             return resultList;
+        }
+
+        private static Mat ImageToFloat(Mat cropedResize)
+        {
+            var result = cropedResize.Reshape(1, 1);
+            result.ConvertTo(result, MatType.CV_32FC1); //convert to float
+            return result;
         }
 
         private static Mat ErodeMorpholgy(Mat src)
