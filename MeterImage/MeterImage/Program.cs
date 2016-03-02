@@ -223,23 +223,30 @@ namespace MeterImage
             resultFloatList = ConvertToFloatImage(cropedResizeList);
 
             
-            Mat results = new Mat();
+            
             Mat neighborResponses=new Mat();
             Mat dists=new Mat();
 
             // mal in dem eigen Bild suchen
             // muss er ja immer finden
             var test = src; //ImageToFloat
-            var xxx=CropedResizeOneImage(test, orderedList.First());
+            Mat xxx=CropedResizeOneImage(test, orderedList.First());
             var help=ImageToFloat(xxx);
             // hier müssen noch die Daten rein, sonst geht es garantiert nicht
-            
-            
-            //http://shimat.github.io/opencvsharp/html/3655b4c2-fc6e-49c5-c8db-ba90e85a9110.htm
-            var lll = kNearest.FindNearest(/*samples:*/new Mat(), 1, /*hier das "gelernte rein"*/results, neighborResponses, dists);
 
-            // todo mb!!!!!!!!!!!!!
-            //var responseList = TrainTheDigitsToAList(cropedResizeList);
+            //Mat xxxresults = CropedResizeOneImage(results, orderedList.First());
+            //var helpresults = ImageToFloat(xxxresults);
+
+            //http://shimat.github.io/opencvsharp/html/3655b4c2-fc6e-49c5-c8db-ba90e85a9110.htm
+            Mat results = new Mat(help.Size(),MatType.CV_16S);
+            //results = help.Clone();
+            var resultAsArray = OutputArray.Create(results);
+            //var hh=resultAsArray.IsReady();
+            var helpAsArray = InputArray.Create(help);
+            // ACHTUNG; das hier alles mit using nutzen, wenn möglich!!!!111
+            // die beiden arrays müssen gleich groß sein glaub ich
+            var lll = kNearest.FindNearest(helpAsArray, 1, resultAsArray);//, neighborResponses, dists);
+
             return resultFloatList;
         }
 
@@ -265,13 +272,14 @@ namespace MeterImage
                 resultList.Add(result);
                 TrainOneDigit(cropedResize, responseList);
             }
+
             // hier wirds antrainiert
-            //var hhh=new TrainData//  (imageAndNumberInCombination, new Mat())
-            //public virtual bool Train(InputArray samples, SampleTypes layout, InputArray responses);
-            //InputArray kkk= new InputArray(imageAndNumberInCombination);
-            var response = InputArray.Create(responseList.First());// imageAndNumberInCombination.ToArray();
-            var image = resultList.First();
-            kNearest.Train(response, SampleTypes.RowSample, image);
+             for(var i=0; i < responseList.Count;i++)
+            { 
+                var responseAsInputArray = InputArray.Create(responseList[i]);// imageAndNumberInCombination.ToArray();
+                var image = InputArray.Create(resultList[i]);
+                kNearest.Train(responseAsInputArray, SampleTypes.RowSample, image);
+            }
 
             return resultList;
         }
