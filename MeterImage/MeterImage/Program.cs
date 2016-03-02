@@ -100,6 +100,10 @@ namespace MeterImage
 
                 //////////////////////////////////////////////////////////////////////////////////////////
                 //////////////////////////////////////////////////////////////////////////////////////
+
+
+                
+
                 // croppedFaceImage = originalImage(faceRect).clone();
                 var digitList = CropAndResizeTheImages(orderedList, src);
 
@@ -139,31 +143,32 @@ namespace MeterImage
         private static List<Mat> CropAndResizeTheImages(List<Point[]> orderedList, Mat src)
         {
             List<Mat> digitList = new List<Mat>();
+            // todo mb: result list ist hier falsch??!! esmuss ein zwischenergbnis rauskommen
             
             var resultList = CropAndResize(orderedList, src);
 
-            // todo mb: result list ist hier falsch??!! esmuss ein zwischenergbnis rauskommen
-            var responseList = TrainTheDigitsToAList(resultList);
+            //var responseList = TrainTheDigitsToAList(orderedList);
 
-            // train the list!!!!!!!!!!!!!!!!!!!!!!!!!
-            var kNearest = OpenCvSharp.ML.KNearest.Create();
-            var i = 0;
-            foreach (var item in resultList)
-            {
-                //(InputArray samples, SampleTypes layout, InputArray responses
-                kNearest.Train(item, SampleTypes.RowSample, responseList[i]);
-            }
 
-            Mat ocrResult = new Mat();
+            //// train the list!!!!!!!!!!!!!!!!!!!!!!!!!
+            //var kNearest = OpenCvSharp.ML.KNearest.Create();
+            //var i = 0;
+            //foreach (var item in resultList)
+            //{
+            //    //(InputArray samples, SampleTypes layout, InputArray responses
+            //    kNearest.Train(item, SampleTypes.RowSample, responseList[i]);
+            //}
 
-            // sieht noch etwas unlogisch aus aber formt auch die dinger
-            Mat neighborResponses = new Mat();
-            Mat dists = new Mat();
-            var xxx = CropAndResize(orderedList, src);
-            foreach (var ppp in xxx)
-            {
-                var lll = kNearest.FindNearest(ppp, 1, ocrResult, neighborResponses, dists);
-            }
+            //Mat ocrResult = new Mat();
+
+            //// sieht noch etwas unlogisch aus aber formt auch die dinger
+            //Mat neighborResponses = new Mat();
+            //Mat dists = new Mat();
+            //var xxx = CropAndResize(orderedList, src);
+            //foreach (var ppp in xxx)
+            //{
+            //    var lll = kNearest.FindNearest(ppp, 1, ocrResult, neighborResponses, dists);
+            //}
             
 
             //// noch nach außerhalb sonst immer dieselbe datei
@@ -200,22 +205,43 @@ namespace MeterImage
         private static List<Mat> CropAndResize(List<Point[]> orderedList, Mat src)
         {
             List<Mat> resultList = new List<Mat>();
+            List<Mat> cropedResizeList = new List<Mat>();
             foreach (Point[] digit in orderedList)
             {
                 var toCrop = Cv2.BoundingRect(digit);
                 Mat croped = new Mat(src, toCrop);
                 Mat cropedResize = new Mat();
+
                 OpenCvSharp.Size size = new OpenCvSharp.Size(600, 600);
                 Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
 
+                cropedResizeList.Add(cropedResize);
+
+                //var result = cropedResize.Reshape(1, 1);
+                //result.ConvertTo(result, MatType.CV_32FC1); //convert to float
+
+                //resultList.Add(result);
+            }
+
+            resultList = ConvertToFloatImage(cropedResizeList);
+
+            // todo mb!!!!!!!!!!!!!
+            var responseList = TrainTheDigitsToAList(cropedResizeList);
+            return resultList;
+        }
+
+        // return the 
+        private static List<Mat> ConvertToFloatImage(List<Mat> cropedList)
+        {
+            List<Mat> resultList = new List<Mat>();
+            foreach (var cropedResize in cropedList)
+            { 
                 var result = cropedResize.Reshape(1, 1);
                 result.ConvertTo(result, MatType.CV_32FC1); //convert to float
                 resultList.Add(result);
             }
             return resultList;
         }
-
-        
 
         private static Mat ErodeMorpholgy(Mat src)
         {
@@ -411,9 +437,9 @@ namespace MeterImage
         {
             var dstNumberOrg = new Mat();
             Cv2.Canny(srcNumberOrg, dstNumberOrg, 80, 80); //src
-            
+
             // todo mb sobel könnte deutlich besser funktionieren?! siehe bild von aforge.net
-            //Cv2.Sobel(srcNumberOrg, dstNumberOrg,MatType.CV_16S, .80, 80);
+            //Cv2.Sobel(srcNumberOrg, dstNumberOrg, MatType.CV_16S, 80, 80);
             Point[][] contoursOrg;
             // HierarchyIndex[] hierarchyIndexesOrg;
             Cv2.FindContours(
