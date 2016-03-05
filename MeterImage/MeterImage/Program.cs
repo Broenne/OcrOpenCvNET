@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
@@ -24,7 +25,8 @@ namespace MeterImage
         static void Main(string[] args)
         {
             Console.WriteLine("Hello");
-            
+            Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
             try
             {
@@ -226,27 +228,38 @@ namespace MeterImage
             
             Mat neighborResponses=new Mat();
             Mat dists=new Mat();
-
             // mal in dem eigen Bild suchen
             // muss er ja immer finden
             var test = src; //ImageToFloat
             Mat xxx=CropedResizeOneImage(test, orderedList.First());
             var help=ImageToFloat(xxx);
             // hier müssen noch die Daten rein, sonst geht es garantiert nicht
-
-            //Mat xxxresults = CropedResizeOneImage(results, orderedList.First());
-            //var helpresults = ImageToFloat(xxxresults);
+            //Mat xxxresults = CropedResizeOneImage(results, orderedList.First());//var helpresults = ImageToFloat(xxxresults);
 
             //http://shimat.github.io/opencvsharp/html/3655b4c2-fc6e-49c5-c8db-ba90e85a9110.htm
-            Mat results = new Mat(help.Size(),MatType.CV_16S);
+            //Mat results = new Mat(help.Size(),MatType.CV_16S);
+            
             //results = help.Clone();
-            var resultAsArray = OutputArray.Create(results);
-            //var hh=resultAsArray.IsReady();
+
+            //360000 //CV32_FC1
+            byte[] input = { 1, 2, 3, 4, 5, };
+            //List<byte> output = new List<byte>();
+            //List<byte> output = new List<CV32_FC1>();
+            //byte[] input = { 1, 2, 3, 4, 5, };
+            List<byte> output = new List<byte>();
+
+            Cv2.Threshold(InputArray.Create(input), OutputArray.Create(output),
+                23, 47, ThresholdTypes.Binary);
+            //resultAsArray.A
+            ////var hh=resultAsArray.IsReady();
             var helpAsArray = InputArray.Create(help);
             // ACHTUNG; das hier alles mit using nutzen, wenn möglich!!!!111
             // die beiden arrays müssen gleich groß sein glaub ich
-            var lll = kNearest.FindNearest(helpAsArray, 1, resultAsArray);//, neighborResponses, dists);
 
+            Mat results = new Mat(help.Size(), MatType.CV_16S);
+            var resultAsArray = OpenCvSharp.OutputArray.Create(results);
+            var lll = kNearest.FindNearest(helpAsArray, 1, resultAsArray);//, OutputArray.Create(neighborResponses), OutputArray.Create(dists));
+        //}
             return resultFloatList;
         }
 
