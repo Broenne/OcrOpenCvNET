@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
@@ -18,12 +19,18 @@ namespace MeterImage
 {
     class Program
     {
+        
+
         //const string path = @"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic1\";
         //const string srcFilename = "GGG.jpg";
-        const string path = @"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic2\";
+        const string ImageFolder = @"\BilderMartin\pic2\";
+        //const string path = @"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic2\";
         const string srcFilename = "Snipet_WP_20160226_017.jpg";
         static void Main(string[] args)
         {
+            var directoryPath = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
+            var rootPath =Directory.GetParent(Directory.GetParent(directoryPath).FullName).FullName;
+            var path = rootPath + ImageFolder;
             Console.WriteLine("Hello");
             Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
