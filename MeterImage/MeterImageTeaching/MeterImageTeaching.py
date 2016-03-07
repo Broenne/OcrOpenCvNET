@@ -3,6 +3,7 @@
 import cv2
 import numpy as np
 import os
+from DigitTeachHelper import resize_One_Image
 
 print "This line will be printed."
 path = os.getcwd()
@@ -34,7 +35,15 @@ for line in txt:
 cv2.imshow('ImageWindow',img)
 cv2.waitKey(0)
 
+#resize the image
+resized_List=[]
 for roi in roiList: 
-    cv2.imshow('ImageWindow',roi)
-    cv2.waitKey(0)
+    resized_image = resize_One_Image(roi)
+    resized_List.append(resized_List) 
+
+#image to float
+
+
+
+
 
