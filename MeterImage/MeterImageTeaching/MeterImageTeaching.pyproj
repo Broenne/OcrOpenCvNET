@@ -22,6 +22,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="DigitNearest.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DigitTeachHelper.py">
       <SubType>Code</SubType>
     </Compile>

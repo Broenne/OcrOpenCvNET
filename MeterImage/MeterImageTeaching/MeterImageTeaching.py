@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import os
 from DigitTeachHelper import resize_One_Image
+from DigitNearest import DigitNearest
 
 print "This line will be printed."
 path = os.getcwd()
@@ -43,7 +44,13 @@ for roi in roiList:
 
 #image to float
 
-
+#train
+instance = DigitNearest()
+instance.sampleList =1 #x[:,:50].reshape(-1,400).astype(np.float32) # Size = (2500,400)
+instance.responseList=2 # heir muss dann die nummer rein
+knn = cv2.ml.KNearest_create()
+knn.train(instance.sampleList,cv2.ml.ROW_SAMPLE,instance.responseList)
+#knn.train(train,train_labels)
 
 
 
