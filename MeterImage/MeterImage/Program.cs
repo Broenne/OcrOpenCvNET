@@ -83,12 +83,27 @@ namespace MeterImage
                 //TODOExtractByXabstand(contoursWithoutInner);
 
                 DrawContours(contoursWithoutInner, org, hierarchyIndexes, Scalar.AliceBlue);
+
+                List <string> rectPositions = new List<string>();
+                foreach(var cont in contoursWithoutInner)
+                { 
+                    Rect rect = Cv2.BoundingRect(cont);
+                    var topLeftX = rect.TopLeft.X;
+                    var topLeftY = rect.TopLeft.Y;
+                    var bottomRightX = rect.BottomRight.X;
+                    var bottomRightY = rect.BottomRight.Y;
+                    var rectToSafe = topLeftX + ";" + topLeftY + ";" + bottomRightX + ";" + bottomRightY;
+                    rectPositions.Add(rectToSafe);
+                }
+                var hhh = srcFilename.Split('.');
+                var saveTo = path + hhh[0] + "_Rects.txt";
+                File.WriteAllLines(saveTo, rectPositions);
                 // evtl jetzt die y höhen behandlung???
 
                 // todo ie rechteckhöhe sollte ungefähr gleich sein, bzw die meisten sind die passendne
 
                 // zeichne Rechteck in orginal
-                foreach(var drawRect in contoursWithoutInner)
+                foreach (var drawRect in contoursWithoutInner)
                 {
                     Rect rectShowing = Cv2.BoundingRect(drawRect);
                     Cv2.Rectangle(org, rectShowing, Scalar.Green,2,LineTypes.Filled);
