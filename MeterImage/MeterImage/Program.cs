@@ -19,7 +19,8 @@ namespace MeterImage
 {
     class Program
     {
-        
+
+        private static string path;       
 
         //const string path = @"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic1\";
         //const string srcFilename = "GGG.jpg";
@@ -30,7 +31,7 @@ namespace MeterImage
         {
             var directoryPath = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
             var rootPath =Directory.GetParent(Directory.GetParent(directoryPath).FullName).FullName;
-            var path = rootPath + ImageFolder;
+            path = rootPath + ImageFolder;
             Console.WriteLine("Hello");
             Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
@@ -98,6 +99,9 @@ namespace MeterImage
                 var hhh = srcFilename.Split('.');
                 var saveTo = path + hhh[0] + "_Rects.txt";
                 File.WriteAllLines(saveTo, rectPositions);
+
+                
+
                 // evtl jetzt die y höhen behandlung???
 
                 // todo ie rechteckhöhe sollte ungefähr gleich sein, bzw die meisten sind die passendne
@@ -321,7 +325,7 @@ namespace MeterImage
 
         private static Mat ImageToFloat(Mat cropedResize)
         {
-            var result = cropedResize.Reshape(1, 1);
+            Mat result = cropedResize.Reshape(1, 1);
             result.ConvertTo(result, MatType.CV_32FC1); //convert to float
             return result;
         }
@@ -518,8 +522,16 @@ namespace MeterImage
 
         private static Point[][] GetContours(Mat srcNumberOrg, out HierarchyIndex[] hierarchyIndexesOrg)
         {
+            var dstGray = new Mat();
+            Cv2.Threshold(srcNumberOrg, dstGray, 80, 80,ThresholdTypes.Binary);
+            var hhh = srcFilename.Split('.');
+            var saveTo = path + hhh[0] + "_gray.jpg";
+            Cv2.ImWrite(saveTo, dstGray);
             var dstNumberOrg = new Mat();
             Cv2.Canny(srcNumberOrg, dstNumberOrg, 80, 80); //src
+
+
+            
 
             // todo mb sobel könnte deutlich besser funktionieren?! siehe bild von aforge.net
             //Cv2.Sobel(srcNumberOrg, dstNumberOrg, MatType.CV_16S, 80, 80);

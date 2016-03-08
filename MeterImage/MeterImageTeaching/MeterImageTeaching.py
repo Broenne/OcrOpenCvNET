@@ -11,7 +11,7 @@ path = os.getcwd()
 print path
 
 
-img = cv2.imread('C:/apps/OcrOpenCvNET/MeterImage/MeterImage/BilderMartin/pic2/Snipet_WP_20160226_017.jpg')
+img = cv2.imread('C:/apps/OcrOpenCvNET/MeterImage/MeterImage/BilderMartin/pic2/Snipet_WP_20160226_017_gray.jpg',0)
 
 filename = 'C:/apps/OcrOpenCvNET/MeterImage/MeterImage/BilderMartin/pic2/Snipet_WP_20160226_017_Rects.txt'
 txt = open(filename)
@@ -40,16 +40,43 @@ cv2.waitKey(0)
 resized_List=[]
 for roi in roiList: 
     resized_image = resize_One_Image(roi)
-    resized_List.append(resized_List) 
+    resized_List.append(resized_image) 
 
 #image to float
 
 #train
+# http://stackoverflow.com/questions/9413216/simple-digit-recognition-ocr-in-opencv-python
 instance = DigitNearest()
-instance.sampleList =1 #x[:,:50].reshape(-1,400).astype(np.float32) # Size = (2500,400)
-instance.responseList=2 # heir muss dann die nummer rein
+smallRoi = resized_List[0].astype(np.float32 ) # Size = (2500,400) #.reshape(-1,400)
+print type(instance.sampleList) #is ndarray
+sample = smallRoi.reshape(1, 300*300)#300*300*3, achtung bei grauweirt müsste das *3 weg!!!!!!!!!!!!
+instance.sampleList =  np.empty((0, 300*300))
+instance.sampleList = np.append(instance.sampleList, sample, 0)
+#hier anders hinzufügen????????????????????????????
+
+listHelperResponse=[]
+cv2.imshow('DigitWindow',resized_List[0])
+xxx=cv2.waitKey(0) # focus have to be on an image!!!
+instance.responseList.append(int(chr(xxx)))
+instance.responseList = np.array(instance.responseList, np.float32)
+instance.responseList = instance.responseList.reshape((instance.responseList.size,1))
+
+
+# method add training data and save
 knn = cv2.ml.KNearest_create()
-knn.train(instance.sampleList,cv2.ml.ROW_SAMPLE,instance.responseList)
+knn.train(instance.sampleList,cv2.ml.ROW_SAMPLE,instance.responseList)#" " "instance.sampleList" " "
+
+print "training complete"
+
+np.savetxt('generalsamples.data',instance.sampleList)
+np.savetxt('generalresponses.data',instance.responseList)
+
+
+#roismall = cv2.resize(roi,(10,10))
+#roismall = roismall.reshape((1,100))
+#roismall = np.float32(roismall)
+retval = knn.findNearest(instance.sampleList[0], k = 1)
+print "retval" + retval
 #knn.train(train,train_labels)
 
 
