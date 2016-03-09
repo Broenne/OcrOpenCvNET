@@ -66,25 +66,7 @@ for resized in resized_List :
 
 
 instance.responseList = np.array(instance.responseList, np.float32)
-instance.responseList = instance.responseList.reshape((instance.responseList.size,1))
-    #print 'instance.responseList[0]' + str(type(instance.responseList[0]))
-
-
-
-    # smallRoi = resized_List[0].astype(np.float32 ) # Size = (2500,400) #.reshape(-1,400)
-    #print type(instance.sampleList) #is ndarray
-    #sample = smallRoi.reshape(1, 300*300)#300*300*3, achtung bei grauweirt müsste das *3 weg!!!!!!!!!!!!
-    #instance.sampleList =  np.empty((0, 300*300), np.float32)
-    #instance.sampleList = np.append(instance.sampleList, sample, 0)
-    #print 'instance.sampleList[0]' + str(type(instance.sampleList[0]))
-
-    #cv2.imshow('DigitWindow',resized_List[0])
-    #xxx=cv2.waitKey(0) # focus have to be on an image!!!
-    #instance.responseList.append(int(chr(xxx)))
-    #instance.responseList = np.array(instance.responseList, np.float32)
-    #instance.responseList = instance.responseList.reshape((instance.responseList.size,1))
-    #print 'instance.responseList[0]' + str(type(instance.responseList[0]))
-
+instance.responseList = instance.responseList.reshape((instance.responseList.size,1))    
 
 np.savetxt('generalsamples.data',instance.sampleList)
 np.savetxt('generalresponses.data',instance.responseList)
@@ -101,13 +83,6 @@ knn.train(samples,cv2.ml.ROW_SAMPLE,responses)#" " "instance.sampleList" " "#.RO
 
 print "training complete"
 
-
-
-
-#roismall = cv2.resize(roi,(10,10))
-#roismall = roismall.reshape((1,100))
-#roismall = np.float32(roismall)
-out = []#np.zeros(im.shape,np.uint8)
 for test in helperForTest :
     retval , results, neigh_resp, dists = knn.findNearest(test, k = 1)
     string = str(int((results[0][0])))
@@ -115,14 +90,5 @@ for test in helperForTest :
     print "result: ", results
     print "neighbours: ", neigh_resp
     print "distance: ", dists, "\n"
-    #cv2.putText(out,string,(x,y+h),0,1,(0,255,0))
-
-
-
-#cv2.imshow('im',im)
-#cv2.imshow('out',out)
-#cv2.waitKey(0)
-#knn.train(train,train_labels)
-
 
 
