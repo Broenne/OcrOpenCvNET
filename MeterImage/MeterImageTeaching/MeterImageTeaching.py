@@ -47,36 +47,81 @@ for roi in roiList:
 #train
 # http://stackoverflow.com/questions/9413216/simple-digit-recognition-ocr-in-opencv-python
 instance = DigitNearest()
-smallRoi = resized_List[0].astype(np.float32 ) # Size = (2500,400) #.reshape(-1,400)
-print type(instance.sampleList) #is ndarray
-sample = smallRoi.reshape(1, 300*300)#300*300*3, achtung bei grauweirt müsste das *3 weg!!!!!!!!!!!!
-instance.sampleList =  np.empty((0, 300*300))
-instance.sampleList = np.append(instance.sampleList, sample, 0)
-#hier anders hinzufügen????????????????????????????
-
 listHelperResponse=[]
-cv2.imshow('DigitWindow',resized_List[0])
-xxx=cv2.waitKey(0) # focus have to be on an image!!!
-instance.responseList.append(int(chr(xxx)))
+helperForTest =[]
+size = 300
+instance.sampleList =  np.empty((0, size*size), np.float32)
+for resized in resized_List : 
+    smallRoi = resized.astype(np.float32 ) # Size = (2500,400) #.reshape(-1,400)
+    print type(instance.sampleList) #is ndarray
+    sample = smallRoi.reshape(1, size*size)#300*300*3, achtung bei grauweirt müsste das *3 weg!!!!!!!!!!!!
+    helperForTest.append(sample) #HELPER
+    print "length" + str(len(helperForTest))    
+    instance.sampleList = np.append(instance.sampleList, sample, 0)
+    # print 'instance.sampleList[0]' + str(type(instance.sampleList[0]))
+
+    cv2.imshow('DigitWindow',resized)
+    xxx=cv2.waitKey(0) # focus have to be on an image!!!
+    instance.responseList.append(int(chr(xxx)))
+
+
 instance.responseList = np.array(instance.responseList, np.float32)
 instance.responseList = instance.responseList.reshape((instance.responseList.size,1))
+    #print 'instance.responseList[0]' + str(type(instance.responseList[0]))
 
 
-# method add training data and save
-knn = cv2.ml.KNearest_create()
-knn.train(instance.sampleList,cv2.ml.ROW_SAMPLE,instance.responseList)#" " "instance.sampleList" " "
 
-print "training complete"
+    # smallRoi = resized_List[0].astype(np.float32 ) # Size = (2500,400) #.reshape(-1,400)
+    #print type(instance.sampleList) #is ndarray
+    #sample = smallRoi.reshape(1, 300*300)#300*300*3, achtung bei grauweirt müsste das *3 weg!!!!!!!!!!!!
+    #instance.sampleList =  np.empty((0, 300*300), np.float32)
+    #instance.sampleList = np.append(instance.sampleList, sample, 0)
+    #print 'instance.sampleList[0]' + str(type(instance.sampleList[0]))
+
+    #cv2.imshow('DigitWindow',resized_List[0])
+    #xxx=cv2.waitKey(0) # focus have to be on an image!!!
+    #instance.responseList.append(int(chr(xxx)))
+    #instance.responseList = np.array(instance.responseList, np.float32)
+    #instance.responseList = instance.responseList.reshape((instance.responseList.size,1))
+    #print 'instance.responseList[0]' + str(type(instance.responseList[0]))
+
 
 np.savetxt('generalsamples.data',instance.sampleList)
 np.savetxt('generalresponses.data',instance.responseList)
 
 
+#LOAD!!!!!!!!!!!!
+samples = np.loadtxt('generalsamples.data', np.float32)
+responses = np.loadtxt('generalresponses.data', np.float32)
+responses = responses.reshape((responses.size, 1))
+
+# method add training data and save
+knn = cv2.ml.KNearest_create()
+knn.train(samples,cv2.ml.ROW_SAMPLE,responses)#" " "instance.sampleList" " "#.ROW_SAMPLE ,.COL_SAMPLE
+
+print "training complete"
+
+
+
+
 #roismall = cv2.resize(roi,(10,10))
 #roismall = roismall.reshape((1,100))
 #roismall = np.float32(roismall)
-retval = knn.findNearest(instance.sampleList[0], k = 1)
-print "retval" + retval
+out = []#np.zeros(im.shape,np.uint8)
+for test in helperForTest :
+    retval , results, neigh_resp, dists = knn.findNearest(test, k = 1)
+    string = str(int((results[0][0])))
+    print "dist: " + str(dists) + "response " + string
+    print "result: ", results
+    print "neighbours: ", neigh_resp
+    print "distance: ", dists, "\n"
+    #cv2.putText(out,string,(x,y+h),0,1,(0,255,0))
+
+
+
+#cv2.imshow('im',im)
+#cv2.imshow('out',out)
+#cv2.waitKey(0)
 #knn.train(train,train_labels)
 
 
