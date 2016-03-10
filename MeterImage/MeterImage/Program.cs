@@ -49,6 +49,7 @@ namespace MeterImage
                 // ACHTUNG!!!!!
                 // Hier morph test!!! diese wird gemacht um die linie weg zu bekommen
                 var srcMorph = ErodeMorpholgy(src);
+                Cv2.NamedWindow("MorpH", WindowMode.Normal);
                 new Window("MorpH", image: srcMorph);
 
                 // Todo mb: Bild an Kanten begradigen
@@ -151,7 +152,9 @@ namespace MeterImage
                 // todo mb crop the rect conturs
                 // Bitmap resPic = (Bitmap)Image.FromFile(fileName, true);
                 var matchCount = 0;
+                Cv2.NamedWindow("org", WindowMode.Normal);
                 new Window("org", image: org);
+                Cv2.NamedWindow("src", WindowMode.Normal);
                 using (new Window("src", image: src))
                 {
                     Cv2.WaitKey(0);
@@ -271,7 +274,7 @@ namespace MeterImage
 
         private static List<Point[]> PointsBySizeToOtherRects(List<Point[]> pointSize)
         {
-// Berechnen der duchscnittshöhe
+            // Berechnen der duchscnittshöhe
             var avareageHeight = 0.0;
             foreach (var cont in pointSize)
             {
