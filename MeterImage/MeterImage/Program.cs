@@ -20,13 +20,13 @@ namespace MeterImage
     class Program
     {
 
-        private static string path;       
+        private static string path;
 
-        //const string path = @"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic1\";
-        //const string srcFilename = "GGG.jpg";
-        const string ImageFolder = @"\BilderMartin\pic2\";
-        //const string path = @"C:\apps\OcrOpenCvNET\MeterImage\MeterImage\BilderMartin\pic2\";
-        const string srcFilename = "Snipet_WP_20160226_017.jpg";
+       
+        
+        const string ImageFolder = @"\BilderMartin\pic1\";
+        const string srcFilename = "GGG.jpg";
+        //const string srcFilename = "Snipet_WP_20160226_017.jpg";
         static void Main(string[] args)
         {
             var directoryPath = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
@@ -132,20 +132,20 @@ namespace MeterImage
 
                 
 
-                // croppedFaceImage = originalImage(faceRect).clone();
-                var digitList = CropAndResizeTheImages(orderedList, src);
+                //// croppedFaceImage = originalImage(faceRect).clone();
+                //var digitList = CropAndResizeTheImages(orderedList, src);
 
-                // todo mb. gut wäre, wenn man einen etwas größeren auschnitt zeigen würde
-                Console.WriteLine("Found Contours:" + digitList.Count);
-                foreach (var digPic in digitList)
-                {
-                    var windowName = "cropedResize_" + new Random();
+                //// todo mb. gut wäre, wenn man einen etwas größeren auschnitt zeigen würde
+                //Console.WriteLine("Found Contours:" + digitList.Count);
+                //foreach (var digPic in digitList)
+                //{
+                //    var windowName = "cropedResize_" + new Random();
 
-                    using (new Window(windowName, image: digPic))
-                    {
-                        Cv2.WaitKey(0);
-                    }
-                }
+                //    using (new Window(windowName, image: digPic))
+                //    {
+                //        Cv2.WaitKey(0);
+                //    }
+                //}
 
 
                 // todo mb crop the rect conturs
@@ -168,167 +168,7 @@ namespace MeterImage
             Console.ReadKey();
         }
 
-        private static List<Mat> CropAndResizeTheImages(List<Point[]> orderedList, Mat src)
-        {
-            List<Mat> digitList = new List<Mat>();
-            // todo mb: result list ist hier falsch??!! esmuss ein zwischenergbnis rauskommen
-            
-            var resultList = CropAndResize(orderedList, src);
 
-            //var responseList = TrainTheDigitsToAList(resultList);
-
-
-            //// train the list!!!!!!!!!!!!!!!!!!!!!!!!!
-            //var kNearest = OpenCvSharp.ML.KNearest.Create();
-            //var i = 0;
-            //foreach (var item in resultList)
-            //{
-            //    //(InputArray samples, SampleTypes layout, InputArray responses
-            //    kNearest.Train(item, SampleTypes.RowSample, responseList[i]);
-            //}
-
-            //Mat ocrResult = new Mat();
-
-            //// sieht noch etwas unlogisch aus aber formt auch die dinger
-            //Mat neighborResponses = new Mat();
-            //Mat dists = new Mat();
-            //var xxx = CropAndResize(orderedList, src);
-            //foreach (var ppp in xxx)
-            //{
-            //    var lll = kNearest.FindNearest(ppp, 1, ocrResult, neighborResponses, dists);
-            //}
-            
-
-            //// noch nach außerhalb sonst immer dieselbe datei
-            //using (
-
-            //    FileStorage fs = new FileStorage(path + "data", FileStorage.Mode.Write))
-            //{
-            //    //fs.
-            //    //fs..WriteObj("result", result); //.GetFileNodeByName(null, nodeName);
-            //                                   //matrix = new Mat(fs.Read<CvMat>(param));
-            //}
-            return digitList;
-        }
-
-        private static int TrainOneDigit(Mat digitMat, List<Mat> responseList)
-        {
-            //List<Mat> responseList = new List<Mat>();
-            //foreach (var res in resultList)
-            //{
-            //}
-            int key = 0;
-            using (new Window("cropedResize", image: digitMat))
-            {
-                var keyAscii = (char)Cv2.WaitKey(0); // standard liest als ascii
-                key = (int)Char.GetNumericValue(keyAscii);
-                if (key >= 0 && key <= 9)
-                {
-                    // todo, das muss jetzt in eine neue Liste
-                    var response = new Mat(1, 1, MatType.CV_32FC1, (float) key);// - '0');
-                    responseList.Add(response);
-                    //responseList.Add(response);
-                    
-                }
-            }
-            return key;
-        }
-
-        private static KNearest kNearest = OpenCvSharp.ML.KNearest.Create();
-
-        private static List<Mat> CropAndResize(List<Point[]> orderedList, Mat src)
-        {
-            List<Mat> resultFloatList = new List<Mat>();
-            List<Mat> cropedResizeList = new List<Mat>();
-            foreach (Point[] digit in orderedList)
-            {
-                var cropedResize = CropedResizeOneImage(src, digit);
-
-                cropedResizeList.Add(cropedResize);
-                //resultList.Add(result);
-            }
-
-            resultFloatList = ConvertToFloatImage(cropedResizeList);
-
-            
-            
-            Mat neighborResponses=new Mat();
-            Mat dists=new Mat();
-            // mal in dem eigen Bild suchen
-            // muss er ja immer finden
-            var test = src; //ImageToFloat
-            Mat xxx=CropedResizeOneImage(test, orderedList.First());
-            var help=ImageToFloat(xxx);
-            // hier müssen noch die Daten rein, sonst geht es garantiert nicht
-            //Mat xxxresults = CropedResizeOneImage(results, orderedList.First());//var helpresults = ImageToFloat(xxxresults);
-
-            //http://shimat.github.io/opencvsharp/html/3655b4c2-fc6e-49c5-c8db-ba90e85a9110.htm
-            //Mat results = new Mat(help.Size(),MatType.CV_16S);
-            
-            //results = help.Clone();
-
-            //360000 //CV32_FC1
-            byte[] input = { 1, 2, 3, 4, 5, };
-            //List<byte> output = new List<byte>();
-            //List<byte> output = new List<CV32_FC1>();
-            //byte[] input = { 1, 2, 3, 4, 5, };
-            List<byte> output = new List<byte>();
-
-            Cv2.Threshold(InputArray.Create(input), OutputArray.Create(output),
-                23, 47, ThresholdTypes.Binary);
-            //resultAsArray.A
-            ////var hh=resultAsArray.IsReady();
-            var helpAsArray = InputArray.Create(help);
-            // ACHTUNG; das hier alles mit using nutzen, wenn möglich!!!!111
-            // die beiden arrays müssen gleich groß sein glaub ich
-
-            Mat results = new Mat(help.Size(), MatType.CV_16S);
-            var resultAsArray = OpenCvSharp.OutputArray.Create(results);
-            var lll = kNearest.FindNearest(helpAsArray, 1, resultAsArray);//, OutputArray.Create(neighborResponses), OutputArray.Create(dists));
-        //}
-            return resultFloatList;
-        }
-
-        private static Mat CropedResizeOneImage(Mat src, Point[] digit)
-        {
-            var toCrop = Cv2.BoundingRect(digit);
-            Mat croped = new Mat(src, toCrop);
-            Mat cropedResize = new Mat();
-
-            OpenCvSharp.Size size = new OpenCvSharp.Size(600, 600);
-            Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
-            return cropedResize;
-        }
-
-        // return the 
-        private static List<Mat> ConvertToFloatImage(List<Mat> cropedList)
-        {
-            List<Mat> resultList = new List<Mat>();
-            List<Mat> responseList = new List<Mat>();
-            foreach (var cropedResize in cropedList)
-            { 
-                var result = ImageToFloat(cropedResize);
-                resultList.Add(result);
-                TrainOneDigit(cropedResize, responseList);
-            }
-
-            // hier wirds antrainiert
-             for(var i=0; i < responseList.Count;i++)
-            { 
-                var responseAsInputArray = InputArray.Create(responseList[i]);// imageAndNumberInCombination.ToArray();
-                var image = InputArray.Create(resultList[i]);
-                kNearest.Train(responseAsInputArray, SampleTypes.RowSample, image);
-            }
-
-            return resultList;
-        }
-
-        private static Mat ImageToFloat(Mat cropedResize)
-        {
-            Mat result = cropedResize.Reshape(1, 1);
-            result.ConvertTo(result, MatType.CV_32FC1); //convert to float
-            return result;
-        }
 
         private static Mat ErodeMorpholgy(Mat src)
         {
@@ -530,9 +370,6 @@ namespace MeterImage
             var dstNumberOrg = new Mat();
             Cv2.Canny(srcNumberOrg, dstNumberOrg, 80, 80); //src
 
-
-            
-
             // todo mb sobel könnte deutlich besser funktionieren?! siehe bild von aforge.net
             //Cv2.Sobel(srcNumberOrg, dstNumberOrg, MatType.CV_16S, 80, 80);
             Point[][] contoursOrg;
@@ -553,3 +390,168 @@ namespace MeterImage
         }
     }
 }
+
+
+
+
+//private static List<Mat> CropAndResizeTheImages(List<Point[]> orderedList, Mat src)
+//{
+//    List<Mat> digitList = new List<Mat>();
+//    todo mb: result list ist hier falsch ?? !!esmuss ein zwischenergbnis rauskommen
+
+//    var resultList = CropAndResize(orderedList, src);
+
+//    var responseList = TrainTheDigitsToAList(resultList);
+
+
+//    // train the list!!!!!!!!!!!!!!!!!!!!!!!!!
+//    var kNearest = OpenCvSharp.ML.KNearest.Create();
+//    var i = 0;
+//    foreach (var item in resultList)
+//    {
+//        //(InputArray samples, SampleTypes layout, InputArray responses
+//        kNearest.Train(item, SampleTypes.RowSample, responseList[i]);
+//    }
+
+//    Mat ocrResult = new Mat();
+
+//    // sieht noch etwas unlogisch aus aber formt auch die dinger
+//    Mat neighborResponses = new Mat();
+//    Mat dists = new Mat();
+//    var xxx = CropAndResize(orderedList, src);
+//    foreach (var ppp in xxx)
+//    {
+//        var lll = kNearest.FindNearest(ppp, 1, ocrResult, neighborResponses, dists);
+//    }
+
+
+//    // noch nach außerhalb sonst immer dieselbe datei
+//    using (
+
+//        FileStorage fs = new FileStorage(path + "data", FileStorage.Mode.Write))
+//    {
+//        //fs.
+//        //fs..WriteObj("result", result); //.GetFileNodeByName(null, nodeName);
+//        //matrix = new Mat(fs.Read<CvMat>(param));
+//    }
+//    return digitList;
+//}
+
+//private static int TrainOneDigit(Mat digitMat, List<Mat> responseList)
+//{
+//    //List<Mat> responseList = new List<Mat>();
+//    //foreach (var res in resultList)
+//    //{
+//    //}
+//    int key = 0;
+//    using (new Window("cropedResize", image: digitMat))
+//    {
+//        var keyAscii = (char)Cv2.WaitKey(0); // standard liest als ascii
+//        key = (int)Char.GetNumericValue(keyAscii);
+//        if (key >= 0 && key <= 9)
+//        {
+//            // todo, das muss jetzt in eine neue Liste
+//            var response = new Mat(1, 1, MatType.CV_32FC1, (float) key);// - '0');
+//            responseList.Add(response);
+//            //responseList.Add(response);
+
+//        }
+//    }
+//    return key;
+//}
+
+//private static KNearest kNearest = OpenCvSharp.ML.KNearest.Create();
+
+//private static List<Mat> CropAndResize(List<Point[]> orderedList, Mat src)
+//{
+//    List<Mat> resultFloatList = new List<Mat>();
+//    List<Mat> cropedResizeList = new List<Mat>();
+//    foreach (Point[] digit in orderedList)
+//    {
+//        var cropedResize = CropedResizeOneImage(src, digit);
+
+//        cropedResizeList.Add(cropedResize);
+//        //resultList.Add(result);
+//    }
+
+//    resultFloatList = ConvertToFloatImage(cropedResizeList);
+
+
+
+//    Mat neighborResponses=new Mat();
+//    Mat dists=new Mat();
+//    // mal in dem eigen Bild suchen
+//    // muss er ja immer finden
+//    var test = src; //ImageToFloat
+//    Mat xxx=CropedResizeOneImage(test, orderedList.First());
+//    var help=ImageToFloat(xxx);
+//    // hier müssen noch die Daten rein, sonst geht es garantiert nicht
+//    //Mat xxxresults = CropedResizeOneImage(results, orderedList.First());//var helpresults = ImageToFloat(xxxresults);
+
+//    //http://shimat.github.io/opencvsharp/html/3655b4c2-fc6e-49c5-c8db-ba90e85a9110.htm
+//    //Mat results = new Mat(help.Size(),MatType.CV_16S);
+
+//    //results = help.Clone();
+
+//    //360000 //CV32_FC1
+//    byte[] input = { 1, 2, 3, 4, 5, };
+//    //List<byte> output = new List<byte>();
+//    //List<byte> output = new List<CV32_FC1>();
+//    //byte[] input = { 1, 2, 3, 4, 5, };
+//    List<byte> output = new List<byte>();
+
+//    Cv2.Threshold(InputArray.Create(input), OutputArray.Create(output),
+//        23, 47, ThresholdTypes.Binary);
+//    //resultAsArray.A
+//    ////var hh=resultAsArray.IsReady();
+//    var helpAsArray = InputArray.Create(help);
+//    // ACHTUNG; das hier alles mit using nutzen, wenn möglich!!!!111
+//    // die beiden arrays müssen gleich groß sein glaub ich
+
+//    Mat results = new Mat(help.Size(), MatType.CV_16S);
+//    var resultAsArray = OpenCvSharp.OutputArray.Create(results);
+//    var lll = kNearest.FindNearest(helpAsArray, 1, resultAsArray);//, OutputArray.Create(neighborResponses), OutputArray.Create(dists));
+////}
+//    return resultFloatList;
+//}
+
+//private static Mat CropedResizeOneImage(Mat src, Point[] digit)
+//{
+//    var toCrop = Cv2.BoundingRect(digit);
+//    Mat croped = new Mat(src, toCrop);
+//    Mat cropedResize = new Mat();
+
+//    OpenCvSharp.Size size = new OpenCvSharp.Size(600, 600);
+//    Cv2.Resize(croped, cropedResize, size); // hier muss jetzt das rect bzw die kontur rein
+//    return cropedResize;
+//}
+
+//// return the 
+//private static List<Mat> ConvertToFloatImage(List<Mat> cropedList)
+//{
+//    List<Mat> resultList = new List<Mat>();
+//    List<Mat> responseList = new List<Mat>();
+//    foreach (var cropedResize in cropedList)
+//    { 
+//        var result = ImageToFloat(cropedResize);
+//        resultList.Add(result);
+//        TrainOneDigit(cropedResize, responseList);
+//    }
+
+//    // hier wirds antrainiert
+//     for(var i=0; i < responseList.Count;i++)
+//    { 
+//        var responseAsInputArray = InputArray.Create(responseList[i]);// imageAndNumberInCombination.ToArray();
+//        var image = InputArray.Create(resultList[i]);
+//        kNearest.Train(responseAsInputArray, SampleTypes.RowSample, image);
+//    }
+
+//    return resultList;
+//}
+
+//private static Mat ImageToFloat(Mat cropedResize)
+//{
+//    Mat result = cropedResize.Reshape(1, 1);
+//    result.ConvertTo(result, MatType.CV_32FC1); //convert to float
+//    return result;
+//}

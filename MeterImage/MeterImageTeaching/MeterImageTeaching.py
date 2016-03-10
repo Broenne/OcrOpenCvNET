@@ -11,9 +11,12 @@ path = os.getcwd()
 print path
 
 
-img = cv2.imread('C:/apps/OcrOpenCvNET/MeterImage/MeterImage/BilderMartin/pic2/Snipet_WP_20160226_017_gray.jpg',0)
+img = cv2.imread('C:/apps/OcrOpenCvNET/MeterImage/MeterImage/BilderMartin/pic1/GGG_gray.jpg',0)
+filename = 'C:/apps/OcrOpenCvNET/MeterImage/MeterImage/BilderMartin/pic1/GGG_Rects.txt'
 
-filename = 'C:/apps/OcrOpenCvNET/MeterImage/MeterImage/BilderMartin/pic2/Snipet_WP_20160226_017_Rects.txt'
+
+#img = cv2.imread('C:/apps/OcrOpenCvNET/MeterImage/MeterImage/BilderMartin/pic2/Snipet_WP_20160226_017_gray.jpg',0)#
+#filename = 'C:/apps/OcrOpenCvNET/MeterImage/MeterImage/BilderMartin/pic2/Snipet_WP_20160226_017_Rects.txt'
 txt = open(filename)
 
 print "Here's your file %r:" % filename
@@ -32,7 +35,7 @@ for line in txt:
         roi = img[top_Left_Y:bottom_Right_Y, top_Left_X:bottom_Right_X]#roi = im[y1:y2, x1:x2]
         roiList.append(roi)
         
-
+cv2.namedWindow('ImageWindow', cv2.WINDOW_NORMAL)
 cv2.imshow('ImageWindow',img)
 cv2.waitKey(0)
 
@@ -47,30 +50,14 @@ for roi in roiList:
 #train
 # http://stackoverflow.com/questions/9413216/simple-digit-recognition-ocr-in-opencv-python
 instance = DigitNearest()
-listHelperResponse=[]
-helperForTest =[]
+helperForTest=[]
 size = 300
-instance.sampleList =  np.empty((0, size*size), np.float32)
 for resized in resized_List : 
-    smallRoi = resized.astype(np.float32 ) # Size = (2500,400) #.reshape(-1,400)
-    print type(instance.sampleList) #is ndarray
-    sample = smallRoi.reshape(1, size*size)#300*300*3, achtung bei grauweirt müsste das *3 weg!!!!!!!!!!!!
+    smallRoi = resized.astype(np.float32 ) 
+    sample = smallRoi.reshape(1, size*size)
     helperForTest.append(sample) #HELPER
-    print "length" + str(len(helperForTest))    
-    instance.sampleList = np.append(instance.sampleList, sample, 0)
-    # print 'instance.sampleList[0]' + str(type(instance.sampleList[0]))
-
-    cv2.imshow('DigitWindow',resized)
-    xxx=cv2.waitKey(0) # focus have to be on an image!!!
-    instance.responseList.append(int(chr(xxx)))
-
-
-instance.responseList = np.array(instance.responseList, np.float32)
-instance.responseList = instance.responseList.reshape((instance.responseList.size,1))    
-
-np.savetxt('generalsamples.data',instance.sampleList)
-np.savetxt('generalresponses.data',instance.responseList)
-
+#TRAINING!!!!!!!!!!!!!
+#instance.train(resized_List)
 
 #LOAD!!!!!!!!!!!!
 samples = np.loadtxt('generalsamples.data', np.float32)
